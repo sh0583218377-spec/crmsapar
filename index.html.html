@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <meta http-equiv="Referrer-Policy" content="no-referrer">
@@ -78,7 +78,7 @@ input,select,textarea{font-family:'Heebo',sans-serif;direction:rtl;outline:none;
 .sb-info small{color:rgba(255,255,255,.45);font-size:11px}
 nav.snav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-sec{padding:10px 16px 3px;font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;font-weight:700}
-.nav-item{display:flex;align-items:center;gap:11px;padding:11px 16px;color:rgba(255,255,255,.65);font-size:14px;cursor:pointer;transition:all .2s;border-right:3px solid transparent}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 16px;color:rgba(255,255,255,.65);font-size:14px;cursor:pointer;transition:all .2s;border-right:3px solid transparent;min-height:44px}
 .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
 .nav-item.active{background:linear-gradient(90deg,rgba(108,63,245,.3),transparent);color:#fff;border-right-color:#A78BFA}
 .nav-badge{background:#EF4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:50px;margin-right:auto;margin-left:4px;min-width:16px;text-align:center;line-height:1.5}
@@ -102,7 +102,7 @@ nav.snav{flex:1;padding:8px 0;overflow-y:auto}
 .topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .content-area{padding:24px;flex:1}
 /* BUTTONS */
-.btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;transition:all .18s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;transition:all .18s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;touch-action:manipulation}
 .btn-primary{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 3px 12px rgba(108,63,245,.35)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,63,245,.45)}
 .btn-teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff}
@@ -268,7 +268,7 @@ input:checked+.tsl:before{transform:translateX(-18px)}
 .t-err{background:linear-gradient(135deg,var(--red),#F87171);color:#fff}
 .t-info{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff}
 /* MOBILE */
-.mob-top{display:none;background:var(--nav);color:#fff;padding:13px 16px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:150}
+.mob-top{display:none;background:var(--nav);color:#fff;padding:13px 16px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:150;min-height:52px;touch-action:manipulation}
 .mob-top h2{font-size:16px;font-weight:800}
 .hamburger{font-size:23px;background:none;color:#fff;padding:2px;cursor:pointer;border:none}
 .mob-logout-btn{background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:8px;width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
@@ -285,6 +285,14 @@ input:checked+.tsl:before{transform:translateX(-18px)}
 .adm-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0}
 .adm-info{flex:1;min-width:0}.adm-name{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .adm-sub{font-size:12px;color:var(--text2);margin-top:3px}.adm-acts{display:flex;gap:5px;flex-shrink:0}
+
+/* Mobile FAB — floating action button for new appointment */
+.mob-fab{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+  width:56px;height:56px;border-radius:50%;font-size:24px;display:none;
+  align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(108,63,245,.5);
+  border:none;cursor:pointer;z-index:90;transition:transform .2s}
+.mob-fab:active{transform:translateX(-50%) scale(.93)}
 /* ANIMATIONS */
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}
@@ -292,34 +300,121 @@ input:checked+.tsl:before{transform:translateX(-18px)}
 @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 @keyframes wave{0%{transform:rotate(0)}20%{transform:rotate(20deg)}40%{transform:rotate(-10deg)}60%{transform:rotate(15deg)}80%{transform:rotate(-5deg)}100%{transform:rotate(0)}}
 /* RESPONSIVE */
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤900px)
+   Sidebar slides out, mobile top bar appears
+   ═══════════════════════════════════════════════════ */
 @media(max-width:900px){
-  .sidebar{transform:translateX(110%)}.sidebar.open{transform:translateX(0)}
-  .main-content{margin-right:0}.mob-top{display:flex}
-  .sb-ovr.vis{display:block}.stats-grid{grid-template-columns:1fr 1fr}
-  .perm-grid{grid-template-columns:1fr}.topbar{display:none}
-  .d-only{display:none !important}.m-only{display:block !important}
+  .sidebar{transform:translateX(110%)}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-right:0}
+  .mob-top{display:flex}
+  .sb-ovr.vis{display:block}
+  .topbar{display:none}
+  .d-only{display:none !important}
+  .m-only{display:block !important}
+  /* 2-col stats on tablet */
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .perm-grid{grid-template-columns:1fr}
+  /* Reduce card padding */
+  .card-body{padding:14px}
+  .card-header{padding:14px 16px}
 }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤600px)
+   Full single-column layout, touch-friendly spacing
+   ═══════════════════════════════════════════════════ */
 @media(max-width:600px){
-  .content-area{padding:12px}
+  /* Layout */
+  .content-area{padding:10px}
   .frow{grid-template-columns:1fr}
-  .hr-row{grid-template-columns:60px 44px 1fr 1fr;gap:6px;padding:8px 10px}
-  .cust-grid{grid-template-columns:1fr 1fr}
-  .modal{margin:4px;max-height:96vh}.mo-body{padding:14px}.mo-foot{flex-wrap:wrap;gap:6px}
-  .gal-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
-  /* admin mobile — make cards stack cleanly */
+  .card{border-radius:12px}
+  .card-body{padding:12px}
+  .card-header{padding:12px 14px}
+  .card-header h2{font-size:15px}
+
+  /* Modal */
+  .modal{margin:0;border-radius:20px 20px 0 0;max-height:94vh;width:100%;position:fixed;bottom:0;left:0;right:0;animation:slideUp .25s ease}
+  .mo-ovr{align-items:center}
+  .mo-body{padding:14px 16px;max-height:65vh;overflow-y:auto}
+  .mo-foot{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .mo-foot .btn{flex:1;min-width:120px;justify-content:center}
+
+  /* Stats grid — always 2×2 on mobile */
+  .stats-grid{grid-template-columns:1fr 1fr !important;gap:10px;margin-bottom:14px}
+  .stat-card{padding:14px 12px;border-radius:12px}
+  .stat-num{font-size:24px}
+  .stat-label{font-size:12px}
+  .stat-icon{font-size:22px;margin-bottom:4px}
+
+  /* Appointment cards — make time bigger, actions wrap */
+  .appt-card{padding:12px 14px;gap:10px;border-radius:10px}
+  .apt-time{font-size:16px;min-width:46px}
+  .apt-name{font-size:14px}
+  .apt-svc{font-size:12px}
+  .apt-acts{flex-wrap:wrap;gap:5px}
+  .stog{font-size:11px}
+  .sopt{padding:5px 9px}
+
+  /* Chat */
+  .chat-wrap{height:calc(100dvh - 260px);min-height:300px}
+  .chat-msgs{padding:10px}
+  .chat-inp-row input{font-size:16px} /* prevent iOS zoom */
+  .cb{max-width:82%;font-size:13px;padding:9px 12px}
+
+  /* Admin user cards — labeled buttons stack cleanly */
   .adm-card{flex-wrap:wrap;gap:8px;padding:12px}
-  .adm-acts{flex-wrap:wrap;gap:4px;width:100%;justify-content:flex-start}
+  .adm-card .adm-av{width:38px;height:38px;font-size:15px}
+  .adm-name{font-size:14px}
+  .adm-sub{font-size:11px;line-height:1.6}
+
+  /* Gallery */
+  .gal-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+
+  /* Forms */
+  .hr-row{grid-template-columns:64px 40px 1fr 1fr;gap:5px;padding:8px 10px}
+  .field label{font-size:12px}
+  input,select,textarea{font-size:16px !important} /* prevent iOS zoom on focus */
+  .btn{padding:10px 16px;font-size:13px}
+  .btn-sm{padding:7px 12px;font-size:12px}
   .btn-icon{padding:8px;font-size:15px;min-width:36px}
-  /* stats 2-col on small phones */
-  .stats-grid{grid-template-columns:1fr 1fr !important}
-  .stat-card{padding:14px}
-  .stat-num{font-size:26px}
+
+  /* Customers */
+  .cust-grid{grid-template-columns:1fr 1fr}
+  .cust-hero{padding:20px 16px}
+  .cust-name{font-size:20px}
+  .cust-av{width:52px;height:52px;font-size:20px}
+
+  /* Hours table */
+  .hi{padding:5px 4px;font-size:13px;width:100%}
+  .hr-day{font-size:12px}
+
+  /* Navigation items */
+  .nav-item{padding:10px 14px;font-size:13px}
+
+  /* Subscription page cards */
+  .adm-card[style*="flex-direction:column"]{padding:14px}
+  /* Bottom-sheet modal overlay */
+  .mo-ovr{align-items:flex-end}
 }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE — Small phones (≤400px)
+   ═══════════════════════════════════════════════════ */
 @media(max-width:400px){
+  .content-area{padding:8px}
   .login-card{padding:28px 16px}
   .cust-grid{grid-template-columns:1fr}
-  .adm-acts .btn-icon{font-size:13px;padding:7px}
+  .stats-grid{gap:8px}
+  .stat-card{padding:12px 10px}
+  .stat-num{font-size:22px}
+  .modal{border-radius:16px 16px 0 0}
+  .mo-foot .btn{font-size:12px;padding:9px 10px}
 }
+
+/* Slide-up animation for bottom sheet modals on mobile */
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -723,6 +818,63 @@ const SQ = {
 };
 
 // ─── POLLING ───
+
+// ═══════════════════════════════════════════════════
+//  CHAT MERGE ENGINE
+//
+//  Problem: both user and admin write their FULL local
+//  db.chats to __SYSTEM__. Last-writer-wins → messages
+//  from the other side get overwritten.
+//
+//  Solution: merge-before-write
+//  1. Every message gets a unique `mid` (message ID)
+//  2. Before writing, read current __SYSTEM__ chats
+//  3. Merge both sides by mid → union, no duplicates
+//  4. Write the merged result — nothing is ever lost
+// ═══════════════════════════════════════════════════
+
+// Generate a unique message ID
+function _mid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+
+// Ensure every message in an array has a mid
+function _ensureMid(msgs){
+  (msgs||[]).forEach(m=>{
+    if(!m.mid) m.mid=(m.date||'')+'_'+(m.time||'')+'_'+(m.from||'')+'_'+(m.text||'').slice(0,8);
+  });
+  return msgs||[];
+}
+
+// Merge two message arrays: takes union by mid, sorted by date+time
+function _mergeChats(local,remote){
+  const map={};
+  _ensureMid(local).forEach(m=>{map[m.mid]=m;});
+  _ensureMid(remote).forEach(m=>{ if(!map[m.mid]) map[m.mid]=m; });
+  return Object.values(map).sort((a,b)=>{
+    const ta=(a.date||'')+' '+(a.time||'');
+    const tb=(b.date||'')+' '+(b.time||'');
+    return ta.localeCompare(tb);
+  });
+}
+
+// Read __SYSTEM__, merge ALL chat threads with local, then write back
+// Ensures no message from either side is ever lost
+async function _mergeWrite(){
+  if(!GAPI.ready()) return false;
+  try{
+    const sys=await SHEETS.readSystem();
+    const remChats=(sys&&sys.data&&sys.data.chats)||{};
+    if(!db.chats) db.chats={};
+    // Merge every thread: local + remote
+    const allUids=new Set([...Object.keys(db.chats),...Object.keys(remChats)]);
+    allUids.forEach(uid=>{
+      db.chats[uid]=_mergeChats(db.chats[uid]||[],remChats[uid]||[]);
+    });
+    localStorage.setItem('bp_db',JSON.stringify(db));
+    await SHEETS.writeSystem();
+    return true;
+  }catch(e){ console.warn('_mergeWrite:',e); return false; }
+}
+
 // ═══════════════════════════════════════════════════
 //  POLLING — real-time sync for logged-in users
 //
@@ -857,13 +1009,17 @@ async function pollSheets() {
         // Sync blocked devices
         if (sys._blockedDevices) db._blockedDevices = sys._blockedDevices;
         localStorage.setItem('bp_db', JSON.stringify(db));
-        // Check subscription change
+        // Check subscription change (compare full object — catches date changes too)
         const freshUser = db.users.find(u=>u.id===CU.id);
-        if (freshUser && freshUser.subscription?.status !== CU.subscription?.status) {
-          CU.subscription = freshUser.subscription;
-          sessSave(CU, !!localStorage.getItem('bp_sess_rem'));
-          const st = CU.subscription?.status;
-          if (st==='expired'||st==='frozen') { showSubscriptionLock(st); return; }
+        if (freshUser) {
+          const oldStr=JSON.stringify(CU.subscription||{});
+          const newStr=JSON.stringify(freshUser.subscription||{});
+          if(oldStr!==newStr){
+            CU.subscription = freshUser.subscription ? {...freshUser.subscription} : {};
+            sessSave(CU, !!localStorage.getItem('bp_sess_rem'));
+            const st = subStatus(CU.subscription)||CU.subscription?.status;
+            if (st==='expired'||st==='frozen') { showSubscriptionLock(st); return; }
+          }
         }
       }
     }
@@ -1307,7 +1463,11 @@ function enterApp(showWelcome=true){
   setTimeout(async ()=>{
     _booting=false;
     autoFreezeExpired(); // silently expire overdue subscriptions on every login
-    buildNav(); goPage(CU.role==='user'?'main':'dashboard');
+    buildNav();
+    const initPage = CU.role==='user'?'main':'dashboard';
+    // Replace current history entry with initial page state
+    history.replaceState({page:initPage,params:{}}, '', '#'+initPage);
+    goPage(initPage,{},true); // _fromPop=true so we don't double-push
     if(CU.role==='user'){
       // Pull latest data from Sheets on every login — syncs across devices
       if(GAPI.ready()){
@@ -1501,11 +1661,15 @@ function closeSb(){document.getElementById('sidebar').classList.remove('open');d
 //  ROUTER
 // ═══════════════════════════════════════════════════
 const PT={dashboard:'לוח בקרה',users:'ניהול משתמשים',adminUsers:'מנהלי מערכת',subscriptions:'מנויים',allchats:'💬 הודעות',groups:'👥 קבוצות',main:'דף ראשי',dateview:'לוח שנה',customer:'כרטיס לקוח',usersupport:'תמיכה',usergroups:'👥 הקבוצות שלי',allcustomers:'לקוחות',allphotos:'גלריה',apiconfig:'הגדרות'};
-function goPage(p,params={}){
+function goPage(p,params={},_fromPop=false){
   // Block expired/frozen users from accessing app pages
   if(CU && CU.role==='user'){
     const st=subStatus(CU.subscription)||CU.subscription?.status;
     if(st==='expired'||st==='frozen'){showSubscriptionLock(st);return;}
+  }
+  // Push to browser history so swipe-back works on mobile
+  if(!_fromPop && typeof history !== 'undefined'){
+    history.pushState({page:p,params}, '', '#'+p);
   }
   curPage=p;setActNav(p);
   if(p!=='allchats') stopAllChatsPoll();
@@ -1809,10 +1973,14 @@ function autoFreezeExpired(){
   db.users.forEach(u => {
     const sub = u.subscription;
     if (!sub) return;
-    // Auto-expire: if status is active but end date has passed, mark as expired
     if ((sub.status === 'active' || !sub.status) && sub.to && sub.to < today) {
       sub.status = 'expired';
       changed = true;
+      // If this is the logged-in user, update CU immediately
+      if(window.CU && CU.id===u.id && CU.role==='user'){
+        CU.subscription = {...sub};
+        sessSave(CU, !!localStorage.getItem('bp_sess_rem'));
+      }
     }
   });
   if (changed) DB.save(db);
@@ -1858,13 +2026,28 @@ function updSubDate(uid,f,v){
   const u=db.users.find(x=>x.id===uid);if(!u)return;
   if(!u.subscription) u.subscription={};
   u.subscription[f]=v;
+  // Auto-compute status from the new date
+  const today=td();
+  if(u.subscription.to && u.subscription.to < today){
+    u.subscription.status='expired';
+  } else if(u.subscription.to && u.subscription.to >= today && u.subscription.status==='expired'){
+    u.subscription.status='active'; // date extended — restore active
+  }
   DB.save(db);
-  // Immediately re-evaluate expiry status after any date change
   autoFreezeExpired();
+  // Update CU immediately if this is the logged-in user
+  if(window.CU&&CU.id===uid&&CU.role==='user'){
+    CU.subscription={...u.subscription};
+    sessSave(CU,!!localStorage.getItem('bp_sess_rem'));
+    const st=subStatus(CU.subscription);
+    if(st==='expired'||st==='frozen') showSubscriptionLock(st);
+  }
+  if(GAPI.ready()) setTimeout(()=>SHEETS.writeSystem(),300);
   toast('תאריך עודכן','ok');
-  // Refresh the subscription badge in-place without full re-render
-  const badge=document.querySelector(`[data-sub-uid="${uid}"]`);
-  if(badge) badge.outerHTML=subBadge(u.subscription?.status);
+  // Refresh all badges for this user
+  document.querySelectorAll(`[data-sub-uid="${uid}"]`).forEach(el=>{
+    el.innerHTML=subBadge(u.subscription?.status);
+  });
 }
 function quickRenew(uid){
   const u=db.users.find(x=>x.id===uid);if(!u)return;
@@ -1888,7 +2071,20 @@ async function createSheetForUser(uid){
     } else { toast('❌ שגיאה ביצירת גיליון','err'); }
   }catch(e){ toast('❌ שגיאת רשת','err'); }
 }
-function updSubStatus(uid,s){const u=db.users.find(x=>x.id===uid);if(u){u.subscription.status=s;DB.save(db);toast('סטטוס עודכן','ok');}}
+function updSubStatus(uid,s){
+  const u=db.users.find(x=>x.id===uid);if(!u)return;
+  if(!u.subscription) u.subscription={};
+  u.subscription.status=s;
+  DB.save(db);
+  // Update CU immediately if this is the logged-in user
+  if(window.CU&&CU.id===uid&&CU.role==='user'){
+    CU.subscription={...u.subscription};
+    sessSave(CU,!!localStorage.getItem('bp_sess_rem'));
+    if(s==='expired'||s==='frozen') showSubscriptionLock(s);
+  }
+  if(GAPI.ready()) setTimeout(()=>SHEETS.writeSystem(),300);
+  toast('סטטוס עודכן','ok');
+}
 
 // ─── API CONFIG with Apps Script setup ───
 function rApiCfg(){
@@ -2939,32 +3135,41 @@ function renderAdminChatHtml(msgs, sfn, myRole){
 
 // openAdminChat — admin/superadmin opens a chat with a specific user (support tab)
 // ── openAdminChat ────────────────────────────────────
-// Opens a support chat modal between admin and a specific user.
-// Starts a live poll (1.5s) inside the modal to receive new messages.
-// Poll stops automatically when the modal is closed.
+// Opens a support chat modal (admin ↔ user).
+// Stops startAllChatsPoll while open (prevents conflicting writes).
+// Uses merge poll: merges remote + local on every tick.
+// Restarts startAllChatsPoll on close.
 function openAdminChat(uid){
   const u=db.users.find(x=>x.id===uid);if(!u)return;
-  // Mark all user messages as read
   if(!db._readMarks) db._readMarks={};
   db._readMarks['support_'+uid]=(db.chats[uid]||[]).filter(m=>m.from==='user').length;
   localStorage.setItem('bp_db',JSON.stringify(db));
   buildNav();
   window._openAdminChatUid=uid;
 
-  const renderChat=()=>{
-    const el=document.getElementById('admin-chat-msgs');
-    if(!el) return;
-    const wasAtBottom=el.scrollHeight-el.scrollTop-el.clientHeight<80;
-    el.innerHTML=renderMsgs(db.chats[uid]||[]);
-    if(wasAtBottom) el.scrollTop=el.scrollHeight;
+  // Stop allchats poll to avoid conflicting writes while modal is open
+  stopAllChatsPoll();
+
+  const renderModal=()=>{
+    const el=document.getElementById('admin-chat-msgs');if(!el)return;
+    const atB=el.scrollHeight-el.scrollTop-el.clientHeight<80;
+    el.innerHTML=renderMsgs(_ensureMid(db.chats[uid]||[]));
+    if(atB)el.scrollTop=el.scrollHeight;
   };
 
-  const chatBody=`<div style="display:flex;flex-direction:column;height:420px">
+  const sbHtml=GAPI.ready()
+    ? `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#D1FAE5;border-radius:6px;margin-bottom:8px;font-size:11px;font-weight:700;color:#065F46" id="adm-sb">
+        <span id="adm-sbd" style="width:7px;height:7px;border-radius:50%;background:#10B981;flex-shrink:0"></span>
+        <span id="adm-sbt">מחובר</span></div>`
+    : `<div style="background:#FEF3C7;border-radius:6px;padding:5px 10px;margin-bottom:8px;font-size:11px;font-weight:700;color:#92400E">⚠️ לא מחובר</div>`;
+
+  const chatBody=`<div style="display:flex;flex-direction:column;height:440px">
+    ${sbHtml}
     <div id="admin-chat-msgs" class="chat-msgs" style="flex:1;overflow-y:auto;padding:8px">
-      ${renderMsgs(db.chats[uid]||[])}
+      ${renderMsgs(_ensureMid(db.chats[uid]||[]))}
     </div>
     <div class="chat-inp-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:6px">
-      <input type="text" id="ci" placeholder="כתוב הודעה..." autocomplete="off"
+      <input type="text" id="ci" placeholder="כתוב תשובה..." autocomplete="off"
         onkeydown="if(event.key==='Enter')sendAdminMsg('${uid}')">
       <button onclick="sendAdminMsg('${uid}')">שלח</button>
     </div>
@@ -2975,7 +3180,10 @@ function openAdminChat(uid){
       clearInterval(window._adminChatPoll);
       window._adminChatPoll=null;
       window._openAdminChatUid=null;
-      closeMo();rAllChats();
+      closeMo();
+      // Restart allchats poll now that modal is closed
+      if(curPage==='allchats') startAllChatsPoll();
+      rAllChats();
     }}]);
 
   setTimeout(()=>{
@@ -2984,26 +3192,32 @@ function openAdminChat(uid){
     document.getElementById('ci')?.focus();
   },80);
 
-  // Live poll — update messages in-place while modal is open
+  // Live merge poll — reads __SYSTEM__ every 1.5s, merges, updates modal
   clearInterval(window._adminChatPoll);
   window._adminChatPoll=setInterval(async()=>{
     if(!document.getElementById('admin-chat-msgs')){
       clearInterval(window._adminChatPoll);window._adminChatPoll=null;return;
     }
     if(!GAPI.ready()) return;
-    const res=await SHEETS.readSystem();
-    if(!res||!res.data||!res.data.chats) return;
-    const remote=res.data.chats[uid]||[];
-    const localMsgs=db.chats[uid]||[];
-    const remoteNewer=remote.length>localMsgs.length||
-      (remote.length===localMsgs.length&&remote.length>0&&
-       remote[remote.length-1]?.text!==localMsgs[localMsgs.length-1]?.text);
-    if(remoteNewer){
-      db.chats[uid]=remote;
-      db._readMarks['support_'+uid]=remote.filter(m=>m.from==='user').length;
-      localStorage.setItem('bp_db',JSON.stringify(db));
-      buildNav();
-      renderChat();
+    try{
+      const sys=await SHEETS.readSystem();if(!sys||!sys.data)return;
+      const remote=(sys.data.chats&&sys.data.chats[uid])||[];
+      const local=db.chats[uid]||[];
+      const merged=_mergeChats(local,remote);
+      const changed=merged.length!==local.length||
+        (merged.length>0&&JSON.stringify(merged[merged.length-1])!==JSON.stringify(local[local.length-1]));
+      if(changed){
+        db.chats[uid]=merged;
+        db._readMarks['support_'+uid]=merged.filter(m=>m.from==='user').length;
+        localStorage.setItem('bp_db',JSON.stringify(db));
+        buildNav();
+        renderModal();
+        const sbt=document.getElementById('adm-sbt');
+        if(sbt) sbt.textContent='עדכון '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+      }
+    }catch(e){
+      const sbd=document.getElementById('adm-sbd');
+      if(sbd){sbd.style.background='#EF4444';}
     }
   },1500);
 }
@@ -3012,14 +3226,15 @@ function openAdminChat(uid){
 function sendAdminMsg(uid){
   const i=document.getElementById('ci'),t=(i?.value||'').trim();if(!t)return;
   if(!db.chats[uid]) db.chats[uid]=[];
-  db.chats[uid].push({from:'admin',text:t,time:nowT(),date:td()});
+  db.chats[uid].push({mid:_mid(),from:'admin',text:t,time:nowT(),date:td()});
   DB.save(db);
   if(i)i.value='';
-  // Re-render immediately
   const el=document.getElementById('admin-chat-msgs');
   if(el){el.innerHTML=renderMsgs(db.chats[uid]);el.scrollTop=el.scrollHeight;}
-  // Sync to Sheets so user sees it immediately
-  if(GAPI.ready()) SHEETS.writeSystem();
+  // Merge-before-write: never overwrites user messages
+  if(GAPI.ready()){
+    _mergeWrite().catch(()=>{ SHEETS.writeSystem().catch(()=>{}); });
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -3245,46 +3460,98 @@ function rCust(phone){
 
 function rUserSupport(){
   markNavRead('usersupport');
-  CA(`<div class="card"><div class="card-header"><h2>💬 תמיכה טכנית</h2></div><div class="card-body">${chatHtml(db.chats[CU.id]||[],"sendUserMsg()")}</div></div>`);
+  const uid=CU.id;
+  // Inline status bar: shows connection state
+  const sbHtml=GAPI.ready()
+    ? `<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#D1FAE5;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:700;color:#065F46" id="chat-sb">
+        <span id="chat-sbd" style="width:8px;height:8px;border-radius:50%;background:#10B981;flex-shrink:0"></span>
+        <span id="chat-sbt">מחובר</span>
+        <button style="margin-right:auto;padding:2px 9px;font-size:11px;border-radius:5px;background:transparent;border:1.5px solid currentColor;cursor:pointer;font-weight:700" onclick="_chatRefresh()">🔄 רענן</button>
+       </div>`
+    : `<div style="background:#FEF3C7;border-radius:6px;padding:6px 12px;margin-bottom:8px;font-size:12px;font-weight:700;color:#92400E">
+        ⚠️ Google Sheets לא מחובר — <a href="#" onclick="event.preventDefault();goPage('apiconfig')" style="color:#92400E;text-decoration:underline">הגדרות</a>
+       </div>`;
+
+  CA(`<div class="card"><div class="card-header"><h2>💬 תמיכה טכנית</h2></div>
+    <div class="card-body" style="padding:14px">
+      ${sbHtml}
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs">${renderMsgs(_ensureMid(db.chats[uid]||[]))}</div>
+        <div class="chat-inp-row">
+          <input type="text" id="ci" placeholder="כתוב הודעה..." autocomplete="off"
+            onkeydown="if(event.key==='Enter')sendUserMsg()">
+          <button onclick="sendUserMsg()">שלח</button>
+        </div>
+      </div>
+    </div></div>`);
+
   setTimeout(()=>{const e=document.getElementById('chat-msgs');if(e)e.scrollTop=e.scrollHeight;},50);
-  // Poll every 1.5s — update in-place, preserve input focus
+
   clearInterval(window._chatPoll);
   window._chatPoll=setInterval(async()=>{
     if(curPage!=='usersupport'){clearInterval(window._chatPoll);return;}
-    const res=await SHEETS.readSystem();
-    if(res&&res.data&&res.data.chats&&res.data.chats[CU.id]){
-      const remote=res.data.chats[CU.id];
-      const local=db.chats[CU.id]||[];
-      // Update if remote has more messages OR same count but different last message (resync)
-      const remoteNewer = remote.length > local.length ||
-        (remote.length === local.length && remote.length > 0 &&
-         remote[remote.length-1]?.text !== local[local.length-1]?.text);
-      if(remoteNewer){
-        db.chats[CU.id]=remote;
+    if(!GAPI.ready()) return;
+    try{
+      const sys=await SHEETS.readSystem();
+      if(!sys||!sys.data) return;
+      const remote=(sys.data.chats&&sys.data.chats[uid])||[];
+      const local=db.chats[uid]||[];
+      // Merge — never lose messages from either side
+      const merged=_mergeChats(local,remote);
+      const changed=merged.length!==local.length||
+        (merged.length>0&&JSON.stringify(merged[merged.length-1])!==JSON.stringify(local[local.length-1]));
+      if(changed){
+        db.chats[uid]=merged;
         localStorage.setItem('bp_db',JSON.stringify(db));
-        // Update in-place — preserve input focus and scroll position
-        const cm=document.getElementById('chat-msgs');
-        const inp=document.getElementById('ci');
-        const savedVal=inp?inp.value:'';
-        const wasAtBottom=cm?(cm.scrollHeight-cm.scrollTop-cm.clientHeight<60):true;
-        if(cm){cm.innerHTML=renderMsgs(db.chats[CU.id]);if(wasAtBottom)cm.scrollTop=cm.scrollHeight;}
-        if(inp){inp.value=savedVal;inp.focus();}
+        const cm=document.getElementById('chat-msgs'),inp=document.getElementById('ci');
+        const sv=inp?inp.value:'';
+        const atB=cm?(cm.scrollHeight-cm.scrollTop-cm.clientHeight<60):true;
+        if(cm){cm.innerHTML=renderMsgs(merged);if(atB)cm.scrollTop=cm.scrollHeight;}
+        if(inp){inp.value=sv;inp.focus();}
         buildNav();
+        const sbt=document.getElementById('chat-sbt');
+        if(sbt) sbt.textContent='עודכן '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
       }
+    }catch(e){
+      const sb=document.getElementById('chat-sb');
+      if(sb) sb.style.background='#FEE2E2';
     }
   },1500);
 }
+
+// Force re-sync: merge + write + update display
+window._chatRefresh=async function(){
+  const btn=document.querySelector('#chat-sb button');
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  const sbt=document.getElementById('chat-sbd');
+  if(sbt){sbt.style.background='#f59e0b';sbt.style.animation='pulse 1s infinite';}
+  const ok=await _mergeWrite();
+  const uid=CU&&CU.id;
+  if(ok&&uid){
+    const cm=document.getElementById('chat-msgs');
+    if(cm){cm.innerHTML=renderMsgs(db.chats[uid]||[]);cm.scrollTop=cm.scrollHeight;}
+  }
+  const sbd=document.getElementById('chat-sbd');
+  if(sbd){sbd.style.background=ok?'#10B981':'#EF4444';sbd.style.animation='';}
+  const sbT=document.getElementById('chat-sbt');
+  if(sbT) sbT.textContent=ok?'מסונכרן ✓':'שגיאה';
+  if(btn){btn.textContent='🔄 רענן';btn.disabled=false;}
+};
+
 function sendUserMsg(){
   const i=document.getElementById('ci'),t=(i?.value||'').trim();if(!t)return;
   const uid=CU.id;
   if(!db.chats[uid]) db.chats[uid]=[];
-  db.chats[uid].push({from:'user',text:t,time:nowT(),date:td()});
+  // Assign unique mid so merge never creates duplicates
+  db.chats[uid].push({mid:_mid(),from:'user',text:t,time:nowT(),date:td()});
   DB.save(db);
   i.value=''; i.focus();
   const el=document.getElementById('chat-msgs');
   if(el){el.innerHTML=renderMsgs(db.chats[uid]);el.scrollTop=el.scrollHeight;}
-  // Write to Sheets so admin sees it immediately (without waiting for next poll)
-  if(GAPI.ready()) SHEETS.writeSystem();
+  // Merge-before-write: read __SYSTEM__, merge, write — never overwrites admin replies
+  if(GAPI.ready()){
+    _mergeWrite().catch(()=>{ SHEETS.writeSystem().catch(()=>{}); });
+  }
 }
 function chatHtml(msgs,sfn){return `<div class="chat-wrap"><div class="chat-msgs" id="chat-msgs">${renderMsgs(msgs)}</div><div class="chat-inp-row"><input type="text" id="ci" placeholder="כתוב הודעה..." onkeydown="if(event.key==='Enter')${sfn}"><button onclick="${sfn}">שלח</button></div></div>`;}
 // ── renderMsgs ───────────────────────────────────────
@@ -4084,6 +4351,19 @@ function toast(msg,type='ok'){
   const t=document.createElement('div');t.className=`toast ${type==='ok'?'t-ok':type==='info'?'t-info':'t-err'}`;t.textContent=msg;
   document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3200);
 }
+
+// ── Back navigation (mobile swipe / browser back button) ──
+// When user swipes back, restore the previous page within the app
+window.addEventListener('popstate', function(e){
+  if(!window.CU) return; // not logged in — let browser handle
+  if(e.state && e.state.page){
+    goPage(e.state.page, e.state.params||{}, true); // _fromPop=true → don't push again
+  } else {
+    // No state — probably the initial entry; go to default page
+    if(CU.role==='user') goPage('main',{},true);
+    else goPage('dashboard',{},true);
+  }
+});
 
 window.addEventListener('DOMContentLoaded', async ()=>{
   // ── Restore data after system update ──
