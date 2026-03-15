@@ -537,14 +537,25 @@ const DEFAULT_SHEET_ID   = '14o-EbhozgOFwVTjnjpfyc9TirjtSfg7uIH8GEuT_Cdg';
 // Clear login rate-limit locks for all users
 function _clearAllLocks(){
   try {
-    // Clear all bp_sec_* keys from localStorage
+    // 1. Clear rate-limit locks (bp_sec_*)
     const keys = Object.keys(localStorage).filter(k=>k.startsWith('bp_sec_'));
     keys.forEach(k=>localStorage.removeItem(k));
-    // Also clear for every known user
+    // Also clear explicitly for all known users
     [...(db.users||[]),...(db.adminUsers||[])].forEach(u=>{
       try{localStorage.removeItem('bp_sec_'+(u.userId||u.id));}catch(e){}
     });
-    toast('✅ כל הנעילות נוקו ('+keys.length+' מפתחות)','ok');
+    // 2. Unblock ALL blocked devices
+    let unblocked = 0;
+    if(db._blockedDevices){
+      Object.keys(db._blockedDevices).forEach(uid=>{
+        unblocked += (db._blockedDevices[uid]||[]).length;
+        db._blockedDevices[uid] = [];
+      });
+      db._blockedDevices = {};
+    }
+    DB.save(db);
+    if(GAPI.ready()) SHEETS.writeSystem();
+    toast(`✅ נוקו ${keys.length} נעילות + ${unblocked} מכשירים חסומים שוחררו`,'ok');
   } catch(e){ toast('שגיאה: '+e.message,'err'); }
 }
 
@@ -1364,13 +1375,16 @@ function sessClear(){
 //  SECURITY — login rate limiting
 // ═══════════════════════════════════════════════════
 const SEC = {
-  MAX: 5, LOCK_MS: 15*60*1000,
   _k(u){ return 'bp_sec_'+(u||'x'); },
+  // Progressive lockout tiers: [attempts, lock_ms, label]
+  TIERS: [[5,30000,'30 שניות'],[10,60000,'דקה אחת'],[15,300000,'5 דקות']],
   check(u){
     try{
       const d=JSON.parse(localStorage.getItem(this._k(u))||'{}');
       if(d.lock&&Date.now()<d.lock){
-        return {ok:false,msg:`🔒 חשבון נעול. נסה שוב בעוד ${Math.ceil((d.lock-Date.now())/60000)} דקות`};
+        const left=Math.ceil((d.lock-Date.now())/1000);
+        const msg=left<60?`🔒 המתן ${left} שניות`:`🔒 המתן ${Math.ceil(left/60)} דקות`;
+        return {ok:false,msg};
       }
     }catch{}
     return {ok:true};
@@ -1379,9 +1393,19 @@ const SEC = {
     try{
       const d=JSON.parse(localStorage.getItem(this._k(u))||'{}');
       d.n=(d.n||0)+1;
-      if(d.n>=this.MAX){d.lock=Date.now()+this.LOCK_MS;d.n=0;}
+      // Check tiers in reverse order (highest first)
+      for(let i=this.TIERS.length-1;i>=0;i--){
+        const [threshold,ms,label]=this.TIERS[i];
+        if(d.n>=threshold){
+          d.lock=Date.now()+ms;
+          // Don't reset n — keep accumulating for next tier
+          localStorage.setItem(this._k(u),JSON.stringify(d));
+          return label; // return label for toast
+        }
+      }
       localStorage.setItem(this._k(u),JSON.stringify(d));
     }catch{}
+    return null;
   },
   ok(u){ try{localStorage.removeItem(this._k(u));}catch{} }
 };
@@ -1446,52 +1470,82 @@ function showLoginErr(msg){
   e.textContent=msg;e.style.display='block';
   e.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:280,iterations:2});
 }
-async function doLogin(){
-  const uid=(document.getElementById('l-uid')?.value||'').trim();
-  const pass=document.getElementById('l-pass')?.value||'';
-  const rem=document.getElementById('l-rem')?.checked||false;
-  const errEl=document.getElementById('l-err');if(errEl)errEl.style.display='none';
+let _loginBusy = false; // prevent parallel login calls
 
-  // Security: detect injection attempts
+async function doLogin(){
+  // ── Prevent parallel calls (user tapping multiple times) ──
+  if(_loginBusy) return;
+  _loginBusy = true;
+
+  const btn  = document.getElementById('l-btn');
+  const errEl= document.getElementById('l-err');
+  const _setBusy = (msg) => { if(btn){btn.disabled=true; btn.textContent=msg||'כניסה...';} };
+  const _setIdle = ()    => { if(btn){btn.disabled=false; btn.textContent='כניסה למערכת ›';} _loginBusy=false; };
+  const _fail   = (msg)  => { showLoginErr(msg); _setIdle(); };
+
+  if(errEl) errEl.style.display='none';
+  _setBusy('כניסה...');
+
+  const uid  = (document.getElementById('l-uid')?.value||'').trim();
+  const pass = document.getElementById('l-pass')?.value||'';
+  const rem  = document.getElementById('l-rem')?.checked||false;
+
+  // Security: injection guard
   if(SHIELD.isSuspicious(uid)||SHIELD.isSuspicious(pass)){
     SHIELD.logThreat('injection_attempt', uid.slice(0,50));
-    showLoginErr('❌ קלט לא תקין');return;
+    _fail('❌ קלט לא תקין'); return;
   }
 
-  const sec=SEC.check(uid||'x');
-  if(!sec.ok){showLoginErr(sec.msg);return;}
-  if(uid===SA.id&&pass===SA.pass){SEC.ok(uid);CU={...SA};sessSave(CU,rem);enterApp(true);return;}
+  // ── If db has no users yet, try loading from Sheets first ──
+  // This handles new devices where localStorage is empty
+  if(db.users.length===0 && db.adminUsers.length===0 && GAPI.ready()){
+    _setBusy('⏳ טוען נתונים מהשרת...');
+    try{
+      const res = await Promise.race([
+        SHEETS.readSystem(),
+        new Promise(r=>setTimeout(()=>r(null), 20000))
+      ]);
+      if(res?.data?.users?.length){
+        db.users      = res.data.users      || [];
+        db.adminUsers = res.data.adminUsers || [];
+        if(res.data.chats)       db.chats       = res.data.chats;
+        if(res.data._blockedDevices) db._blockedDevices = res.data._blockedDevices;
+        localStorage.setItem('bp_db', JSON.stringify(db));
+      }
+    }catch(e){ console.warn('login fetch:', e); }
+    _setBusy('כניסה...');
+  }
+
+  // ── Check rate-limit AFTER loading (so we don't lock on data-not-loaded) ──
+  const sec = SEC.check(uid||'x');
+  if(!sec.ok){ _fail(sec.msg); return; }
+
+  // ── Try all user types ──
+  if(uid===SA.id&&pass===SA.pass){
+    SEC.ok(uid); CU={...SA}; sessSave(CU,rem); _loginBusy=false; enterApp(true); return;
+  }
   const au=db.adminUsers.find(a=>a.userId===uid&&a.pass===pass);
-  if(au){SEC.ok(uid);CU={...au,role:'admin'};sessSave(CU,rem);enterApp(true);return;}
+  if(au){
+    SEC.ok(uid); CU={...au,role:'admin'}; sessSave(CU,rem); _loginBusy=false; enterApp(true); return;
+  }
   const bu=db.users.find(u=>u.userId===uid&&u.pass===pass);
   if(bu){
-    // Check if this device is blocked for this user
     const devId=localStorage.getItem('bp_device_id')||'';
     const isBlocked=devId&&((db._blockedDevices||{})[bu.id]||[]).some(d=>d.devId===devId);
-    if(isBlocked){showLoginErr('🚫 מכשיר זה חסום. פנה למנהל המערכת.');return;}
-    SEC.ok(uid);CU={...bu,role:'user'};sessSave(CU,rem);enterApp(true);return;
+    if(isBlocked){ _fail('🚫 מכשיר זה חסום. פנה למנהל המערכת.'); return; }
+    SEC.ok(uid); CU={...bu,role:'user'}; sessSave(CU,rem); _loginBusy=false; enterApp(true); return;
   }
-  // If db.users is empty and GAPI is ready → maybe Sheets didn't load yet
-  // Try fetching once more before giving up
-  if(db.users.length===0 && db.adminUsers.length===0 && GAPI.ready()){
-    const btn=document.getElementById('l-btn');
-    if(btn){btn.disabled=true;btn.textContent='⏳ טוען נתונים...';}
-    try{
-      const res=await SHEETS.readSystem();
-      if(res&&res.data&&Array.isArray(res.data.users)&&res.data.users.length>0){
-        db.users=res.data.users||[];
-        db.adminUsers=res.data.adminUsers||[];
-        localStorage.setItem('bp_db',JSON.stringify(db));
-        // Retry login with freshly loaded data
-        if(btn){btn.disabled=false;btn.textContent='כניסה למערכת ›';}
-        doLogin(); return; // recursive call with fresh data
-      }
-    }catch(e){}
-    if(btn){btn.disabled=false;btn.textContent='כניסה למערכת ›';}
+
+  // ── Login failed — count only if db has users (real wrong password) ──
+  if(db.users.length>0 || db.adminUsers.length>0){
+    const lockLabel=SEC.fail(uid||'x');
+    const sec2=SEC.check(uid||'x');
+    if(lockLabel) _fail(`🔒 יותר מדי נסיונות. נעול ל-${lockLabel}`);
+    else _fail(sec2.ok ? '❌ מזהה משתמש או סיסמה שגויים' : sec2.msg);
+  } else {
+    // db still empty after fetch attempt → network/config issue
+    _fail('⚠️ לא ניתן לטעון נתונים. בדוק חיבור אינטרנט ו-URL של הסקריפט.');
   }
-  SEC.fail(uid||'x');
-  const sec2=SEC.check(uid||'x');
-  showLoginErr(sec2.ok?'❌ מזהה משתמש או סיסמה שגויים — אם זה מכשיר חדש, בדוק חיבור לאינטרנט':sec2.msg);
 }
 
 function enterApp(showWelcome=true){
@@ -4551,21 +4605,33 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   </div>`;
   loginEl.classList.add('active');
 
-  // Try to fetch system data from Sheets (brings cross-device data)
+  // Fetch system data from Sheets
+  // Fast path: if localStorage already has users, skip slow boot fetch
+  // (bg sync will update in background after login screen shows)
+  // Slow path: new device with empty db → must fetch before showing login
   if (GAPI.ready()) {
     try {
-      // Try up to 2 times with 15s timeout each — handles slow networks and cold starts
+      const hasLocalData = db.users.length > 0;
       let res = null;
-      for(let attempt=1; attempt<=2 && !res?.data?.users?.length; attempt++){
-        if(attempt>1){
-          const loadTxt=document.querySelector('#screen-login div[style*="טוען"]');
-          if(loadTxt) loadTxt.textContent='מנסה שוב... ('+attempt+'/2)';
+      if(!hasLocalData){
+        // New device — fetch up to 2 times with 15s timeout
+        for(let attempt=1; attempt<=2 && !res?.data?.users?.length; attempt++){
+          if(attempt>1){
+            const loadTxt=document.querySelector('#screen-login div[style*="טוען"]');
+            if(loadTxt) loadTxt.textContent='מנסה שוב... ('+attempt+'/2)';
+          }
+          res = await Promise.race([
+            SHEETS.readSystem(),
+            new Promise(r => setTimeout(()=>r(null), 15000))
+          ]);
+          if(res?.data?.users?.length) break;
         }
+      } else {
+        // Existing device — quick 3s fetch to get latest changes
         res = await Promise.race([
           SHEETS.readSystem(),
-          new Promise(r => setTimeout(()=>r(null), 15000)) // 15s timeout
+          new Promise(r => setTimeout(()=>r(null), 3000))
         ]);
-        if(res?.data?.users?.length) break; // got data, stop retrying
       }
       if (res && res.data && Array.isArray(res.data.users)) {
         const sys = res.data;
@@ -4654,7 +4720,28 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   // keydown handlers added inline in HTML
   // Try session restore (remember me or session)
   if (!sessRestore()) {
-    // Still show login
+    // Start background sync while user fills the login form
+    // so data is ready when they press the button
+    if(GAPI.ready() && db.users.length===0){
+      setTimeout(async()=>{
+        try{
+          const res=await Promise.race([
+            SHEETS.readSystem(),
+            new Promise(r=>setTimeout(()=>r(null),20000))
+          ]);
+          if(res?.data?.users?.length){
+            db.users      = res.data.users      || [];
+            db.adminUsers = res.data.adminUsers || [];
+            if(res.data._blockedDevices) db._blockedDevices=res.data._blockedDevices;
+            if(res.data.chats)           db.chats=res.data.chats;
+            localStorage.setItem('bp_db',JSON.stringify(db));
+            // Show subtle "ready" indicator on login button
+            const btn=document.getElementById('l-btn');
+            if(btn&&!btn.disabled) btn.style.boxShadow='0 4px 20px rgba(16,185,129,.6)';
+          }
+        }catch(e){ console.warn('bg sync:',e); }
+      },500); // 500ms delay so login screen renders first
+    }
   }
 });
 </script>
