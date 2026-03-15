@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
+<html lang="he" dir="rtl"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -8,7 +6,7 @@
 <meta http-equiv="Referrer-Policy" content="no-referrer">
 <meta name="robots" content="noindex,nofollow">
 <title>BookPro – מערכת ניהול תורים</title>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&amp;family=Frank+Ruhl+Libre:wght@400;700;900&amp;display=swap" rel="stylesheet">
 <style>
 :root{
   --g1:#6C3FF5;--g2:#A855F7;--g3:#EC4899;
@@ -420,53 +418,338 @@ input:checked+.tsl:before{transform:translateX(-18px)}
 </head>
 <body>
 <!-- LOGIN -->
-<div id="screen-login" class="screen active">
-  <div class="login-wrap"><div class="login-card">
+<div id="screen-login" class="screen"><div class="login-wrap"><div class="login-card">
     <div class="login-logo">
       <div class="login-icon">📅</div><h1>BookPro</h1><p>מערכת ניהול תורים חכמה</p>
     </div>
     <div class="login-fields">
       <div class="lg-field"><label>מזהה משתמש</label>
-        <div class="inp-wrap"><input type="text" id="l-uid" placeholder="טלפון או מזהה" autocomplete="off" autocorrect="off" autocapitalize="off" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()"><span class="inp-ic">👤</span></div>
+        <div class="inp-wrap"><input type="text" id="l-uid" placeholder="טלפון או מזהה" autocomplete="off" autocorrect="off" autocapitalize="off"><span class="inp-ic">👤</span></div>
       </div>
       <div class="lg-field"><label>סיסמה</label>
-        <div class="inp-wrap"><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><span class="inp-ic">🔒</span></div>
+        <div class="inp-wrap"><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"><span class="inp-ic">🔒</span></div>
       </div>
       <label class="lg-remember">
         <input type="checkbox" id="l-rem"><div class="lg-check-box"></div>
         <span class="lg-remember-lbl">זכור אותי 30 יום</span>
       </label>
-      <button class="btn-login" onclick="doLogin()">כניסה למערכת ›</button>
-      <div class="login-err" id="l-err">❌ מזהה משתמש או סיסמה שגויים</div>
+      <button class="btn-login" id="l-btn" onclick="doLogin()" disabled="">כניסה...</button>
+      <div class="login-err" id="l-err" style="display: none;">❌ מזהה משתמש או סיסמה שגויים</div>
     </div>
     <div class="login-footer">BookPro v5 · מאובטח</div>
-  </div></div>
-</div>
+  </div></div></div>
 <!-- APP -->
-<div id="screen-app" class="screen">
+<div id="screen-app" class="screen active">
   <div class="mob-top">
     <button class="hamburger" onclick="toggleSb()">☰</button>
-    <h2 id="mob-title">BookPro</h2>
-    <button id="mob-back-btn" onclick="_mobGoBack()" style="display:none;align-items:center;justify-content:center;background:transparent;border:none;color:#fff;font-size:26px;font-weight:300;cursor:pointer;padding:0 8px;line-height:1">‹</button>
+    <h2 id="mob-title">הגדרות</h2>
+    <button id="mob-back-btn" onclick="_mobGoBack()" style="display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: rgb(255, 255, 255); font-size: 26px; font-weight: 300; cursor: pointer; padding: 0px 8px; line-height: 1;">‹</button>
     <button class="mob-logout-btn" onclick="doLogout()" title="התנתק">🚪</button>
   </div>
   <div class="sb-ovr" id="sb-ovr" onclick="toggleSb()"></div>
   <div class="app-layout">
     <div class="sidebar" id="sidebar">
       <div class="sb-logo"><div class="sb-logo-ic">✂</div><div><h2>BookPro</h2><span>ניהול תורים</span></div></div>
-      <div class="sb-user"><div class="sb-av" id="sb-av">?</div>
-        <div class="sb-info"><strong id="sb-name">—</strong><small id="sb-role">—</small></div></div>
+      <div class="sb-user"><div class="sb-av" id="sb-av">ש</div>
+        <div class="sb-info"><strong id="sb-name">שימי</strong><small id="sb-role">👑 מנהל ראשי</small></div></div>
       <div id="sync-pill" class="sync-pill sync-off"><div class="sync-dot" id="sync-dot"></div></div>
-      <nav class="snav" id="snav"></nav>
+      <nav class="snav" id="snav"><div class="nav-sec">ניהול</div><div class="nav-item" id="ni-dashboard"><span class="ni">📊</span>לוח בקרה</div><div class="nav-item" id="ni-users"><span class="ni">👥</span>משתמשים</div><div class="nav-item" id="ni-adminUsers"><span class="ni">🛡</span>מנהלי מערכת</div><div class="nav-sec">כלים</div><div class="nav-item" id="ni-subscriptions"><span class="ni">💳</span>מנויים</div><div class="nav-item" id="ni-allchats"><span class="ni">💬</span>הודעות</div><div class="nav-item" id="ni-groups"><span class="ni">👥</span>קבוצות</div><div class="nav-item active" id="ni-apiconfig"><span class="ni">⚙️</span>הגדרות</div></nav>
       <div class="sb-bot"><button class="btn-logout" onclick="doLogout()">🚪 התנתק</button></div>
     </div>
     <div class="main-content">
-      <div class="topbar"><h1 id="page-title">דף ראשי</h1><div class="topbar-actions" id="ta"></div></div>
-      <div class="content-area" id="ca"></div>
+      <div class="topbar"><h1 id="page-title">הגדרות</h1><div class="topbar-actions" id="ta"></div></div>
+      <div class="content-area" id="ca">
+  <div class="api-blk">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div><h3>⚙️ חיבור לגוגל שיטס</h3><p style="margin:4px 0 0">סנכרון דו-כיווני מלא – כל שינוי מתעדכן באתר ובגיליון</p></div>
+      <div class="api-st api-ok"><div class="api-dot"></div>🟢 מחובר</div>
+    </div>
+    <div class="field"><label>🔗 Apps Script URL</label>
+      <input type="text" id="g-url" value="https://script.google.com/macros/s/AKfycbzC_EFqcn3A1qPVbpSaqnpJoWcDjpTj-fNYBi1eMyRRfq29ddPUY_MTx0GjvN5WwZg3/exec" placeholder="https://script.google.com/macros/s/.../exec">
+      <div class="fhint">כתובת ה-Web App שתקבל לאחר פרסום הסקריפט (ראה הוראות למטה)</div>
+    </div>
+    <div class="field"><label>📊 Spreadsheet ID (אופציונלי – לפתיחה ישירה)</label>
+      <input type="text" id="g-sheet" value="14o-EbhozgOFwVTjnjpfyc9TirjtSfg7uIH8GEuT_Cdg" placeholder="1BxiMVs0XRA5...">
+      <div class="fhint">מה-URL: /spreadsheets/d/<strong>ID_כאן</strong>/edit</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveGapi()">💾 שמור</button>
+      <button class="btn btn-teal" id="test-btn" onclick="testScript()">🔌 בדוק חיבור</button>
+      <button class="btn btn-outline" onclick="_copyShareLink()" title="העתק קישור שכולל את ה-URL — שלח למישהו ופותח את האפליקציה מוגדרת">🔗 העתק קישור שיתוף</button>
+      <button class="btn btn-outline" onclick="exportUpdatedHTML()" title="הורד קובץ HTML עם ה-URL הנוכחי — העלה ל-Vercel ומכשירים חדשים יסתנכרנו אוטומטית">📥 ייצא HTML מעודכן לVercel</button>
+    </div>
+  </div>
+
+  <div class="api-blk">
+    <h3>📋 הוראות הגדרה – 5 דקות</h3><p></p>
+    <div class="step-row"><div class="step-num">1</div><div>
+      פתח <a href="https://script.google.com" target="_blank" style="color:var(--primary);font-weight:800">script.google.com</a> → לחץ <strong>New project</strong>
+    </div></div>
+    <div class="step-row"><div class="step-num">2</div><div>
+      מחק את הקוד הקיים, <strong>העתק את הקוד למטה</strong> והדבק – ה-ID של הגיליון כבר מוגדר
+    </div></div>
+    <div class="step-row"><div class="step-num">3</div><div>
+      לחץ <strong>Deploy → New deployment</strong> → Type: <strong>Web app</strong><br>
+      Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong> → <strong>Deploy</strong>
+    </div></div>
+    <div class="step-row"><div class="step-num">4</div><div>
+      העתק את ה-<strong>Web app URL</strong> שנוצר → הדבק בשדה למעלה → שמור
+    </div></div>
+    <div class="step-row"><div class="step-num">5</div><div>
+      לחץ <strong>בדוק חיבור</strong> כדי לוודא שהכל עובד ולייצר גיליונות אוטומטית → הגיליון ייפתח אוטומטית עם כל התורים ✅
+    </div></div>
+    <div style="margin-top:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <strong style="font-size:14px">קוד Apps Script (העתק והדבק)</strong>
+      <button class="btn btn-outline btn-sm" onclick="copyScript()">📋 העתק</button>
+    </div>
+    <div class="code-block" id="script-code">// ╔══════════════════════════════════════════════════╗
+// ║  BookPro – Google Apps Script  v5              ║
+// ║  שינויים: doPost לפיילואד גדול (writeSystem)  ║
+// ║  1. הדבק קוד זה ב-script.google.com            ║
+// ║  2. פרסם: Deploy → New deployment               ║
+// ║     Type: Web app | Execute as: Me              ║
+// ║     Access: Anyone                              ║
+// ║  3. העתק את ה-URL ל-BookPro                    ║
+// ╚══════════════════════════════════════════════════╝
+
+const SPREADSHEET_ID = '14o-EbhozgOFwVTjnjpfyc9TirjtSfg7uIH8GEuT_Cdg';
+const DRIVE_FOLDER_NAME = 'BookPro_Images';
+
+// עמודות – תאריך | שעה | סטטוס | שם לקוח | טלפון | שירות | מחיר | תיאור | הערות | עדכון אחרון | תמונה
+const COL_HEADERS = ['תאריך','שעה','סטטוס','שם לקוח','טלפון','שירות','מחיר','תיאור','הערות','עדכון אחרון','תמונה'];
+
+function getFolder() {
+  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(DRIVE_FOLDER_NAME);
+}
+
+// ── Parse params from GET or POST ──
+function getParams(e) {
+  if (e.postData &amp;&amp; e.postData.contents) {
+    try {
+      const body = JSON.parse(e.postData.contents);
+      return { action: body.action || '', p: body.payload || {} };
+    } catch(err) {}
+  }
+  let p = {};
+  try { p = JSON.parse(e.parameter.payload || '{}'); } catch(err) {}
+  return { action: e.parameter.action || '', p };
+}
+
+function doGet(e)  { return route(e); }
+function doPost(e) { return route(e); }
+
+function route(e) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const { action, p } = getParams(e);
+
+    if (action === 'readAll') {
+      const sheet = ss.getSheetByName(e.parameter.sheet || '');
+      if (!sheet) return json({rows:[], error:'sheet_not_found'});
+      const data = sheet.getDataRange().getDisplayValues();
+      if (data.length &lt;= 1) return json({rows:[]});
+      return json({rows: data.slice(1)});
+    }
+    if (action === 'ping')        return json({ok:true});
+    if (action === 'readSystem')  return readSystem(ss);
+    if (action === 'readImages')  return readImages(ss);
+    if (action === 'createSheet') return createSheet(ss, p);
+    if (action === 'updateRow')   return updateRow(ss, p);
+    if (action === 'appendRows')  return appendRows(ss, p);
+    if (action === 'writeSystem') return writeSystem(ss, p);
+    if (action === 'writeImage')  return writeImage(ss, p);
+    if (action === 'writeBackup') return writeBackup(ss, p);
+    if (action === 'deleteRow')   return deleteRow(ss, p);
+
+    return json({error:'unknown_action'});
+  } catch(err) { return json({error: err.message}); }
+}
+
+function setTxt(range) { range.setNumberFormat('@STRING@'); }
+
+function createSheet(ss, p) {
+  let sheet = ss.getSheetByName(p.sheetName);
+  const isNew = !sheet;
+  if (!sheet) sheet = ss.insertSheet(p.sheetName);
+  if (!isNew &amp;&amp; !p.forceReset) return json({success:true, existed:true});
+  sheet.clear();
+  const rows = p.rows || [];
+  setTxt(sheet.getRange(1, 1, Math.max(2000, rows.length+2), COL_HEADERS.length));
+  const hdr = sheet.getRange(1, 1, 1, COL_HEADERS.length);
+  hdr.setValues([COL_HEADERS]);
+  hdr.setBackground('#4B0082').setFontColor('#ffffff').setFontWeight('bold').setFontSize(11);
+  sheet.setFrozenRows(1);
+  [110,70,75,145,135,125,70,135,135,140].forEach((w,i) =&gt; sheet.setColumnWidth(i+1, w));
+  if (rows.length) {
+    const dr = sheet.getRange(2, 1, rows.length, COL_HEADERS.length);
+    setTxt(dr); dr.setValues(rows); colorRows(sheet, 2, rows);
+  }
+  return json({success:true});
+}
+
+function appendRows(ss, p) {
+  const sheet = ss.getSheetByName(p.sheetName);
+  if (!sheet) return json({error:'sheet_not_found'});
+  const rows = p.rows || [];
+  if (!rows.length) return json({success:true});
+  const startRow = sheet.getLastRow() + 1;
+  const dr = sheet.getRange(startRow, 1, rows.length, COL_HEADERS.length);
+  setTxt(dr); dr.setValues(rows); colorRows(sheet, startRow, rows);
+  return json({success:true});
+}
+
+function updateRow(ss, p) {
+  const sheet = ss.getSheetByName(p.sheetName);
+  if (!sheet) return json({error:'sheet_not_found', sheetName:p.sheetName});
+  const data = sheet.getDataRange().getDisplayValues();
+  for (let i = 1; i &lt; data.length; i++) {
+    if (String(data[i][0]).trim() === p.date &amp;&amp; String(data[i][1]).trim().substring(0,5) === p.time) {
+      const range = sheet.getRange(i+1, 1, 1, COL_HEADERS.length);
+      setTxt(range); range.setValues([p.row]); colorRow(sheet, i+1, p.row[2]);
+      return json({success:true, row:i+1});
+    }
+  }
+  const newR = sheet.getLastRow() + 1;
+  const range = sheet.getRange(newR, 1, 1, COL_HEADERS.length);
+  setTxt(range); range.setValues([p.row]); colorRow(sheet, newR, p.row[2]);
+  return json({success:true, appended:true});
+}
+
+function writeImage(ss, p) {
+  try {
+    const base64 = p.base64 || '';
+    if (!base64.startsWith('data:')) return json({error:'invalid_image'});
+    const mime = base64.match(/data:([^;]+);base64,/)[1];
+    const data = base64.replace(/^data:[^;]+;base64,/, '');
+    const blob = Utilities.newBlob(Utilities.base64Decode(data), mime, p.apptId + '.jpg');
+    const folder = getFolder();
+    const existing = folder.getFilesByName(p.apptId + '.jpg');
+    while (existing.hasNext()) existing.next().setTrashed(true);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    const driveUrl = 'https://drive.google.com/uc?export=view&amp;id=' + file.getId();
+    let imgSheet = ss.getSheetByName('__IMAGES__');
+    if (!imgSheet) {
+      imgSheet = ss.insertSheet('__IMAGES__');
+      imgSheet.getRange(1,1,1,4).setValues([['apptId','userId','driveUrl','updated']]);
+      imgSheet.getRange(1,1,1,4).setBackground('#1a1a2e').setFontColor('#fff').setFontWeight('bold');
+    }
+    const rows = imgSheet.getDataRange().getDisplayValues();
+    for (let i = 1; i &lt; rows.length; i++) {
+      if (rows[i][0] === p.apptId) {
+        imgSheet.getRange(i+1,1,1,4).setValues([[p.apptId, p.userId, driveUrl, new Date().toLocaleString('he-IL')]]);
+        return json({success:true, driveUrl});
+      }
+    }
+    imgSheet.appendRow([p.apptId, p.userId, driveUrl, new Date().toLocaleString('he-IL')]);
+    return json({success:true, driveUrl});
+  } catch(err) { return json({error: err.message}); }
+}
+
+function readImages(ss) {
+  const sheet = ss.getSheetByName('__IMAGES__');
+  if (!sheet) return json({images:[]});
+  const rows = sheet.getDataRange().getDisplayValues();
+  const images = rows.slice(1).filter(r=&gt;r[0]).map(r=&gt;({apptId:r[0],userId:r[1],driveUrl:r[2]}));
+  return json({images});
+}
+
+function writeBackup(ss, p) {
+  try {
+    const jsonStr = p.data || '{}';
+    const ts = new Date().toLocaleString('he-IL');
+    const folder = getFolder();
+    const files = folder.getFilesByName('bookpro_backup.json');
+    while (files.hasNext()) files.next().setTrashed(true);
+    const blob = Utilities.newBlob(jsonStr, 'application/json', 'bookpro_backup.json');
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    let bSheet = ss.getSheetByName('__BACKUP__');
+    if (!bSheet) {
+      bSheet = ss.insertSheet('__BACKUP__');
+      bSheet.getRange(1,1,1,3).setValues([['גיבוי אחרון','Drive File ID','גודל (bytes)']]);
+      bSheet.getRange(1,1,1,3).setBackground('#1a1a2e').setFontColor('#fff').setFontWeight('bold');
+    }
+    bSheet.getRange(2,1,1,3).setValues([[ts, file.getId(), jsonStr.length]]);
+    return json({success:true, ts, fileId:file.getId()});
+  } catch(err) { return json({error: err.message}); }
+}
+
+function writeSystem(ss, p) {
+  let sheet = ss.getSheetByName('__SYSTEM__');
+  if (!sheet) sheet = ss.insertSheet('__SYSTEM__');
+  sheet.clear();
+  sheet.getRange(1,1).setValue(JSON.stringify(p.data || {}));
+  return json({success:true});
+}
+function readSystem(ss) {
+  const sheet = ss.getSheetByName('__SYSTEM__');
+  if (!sheet) return json({data:null});
+  const val = sheet.getRange(1,1).getValue();
+  if (!val) return json({data:null});
+  try { return json({data:JSON.parse(val)}); } catch(e) { return json({data:null}); }
+}
+
+// deleteRow — finds a row by date+time and removes it from the sheet
+function deleteRow(ss, p) {
+  const sheet = ss.getSheetByName(p.sheetName);
+  if (!sheet) return json({error:'sheet_not_found'});
+  const data = sheet.getDataRange().getDisplayValues();
+  for (let i = data.length - 1; i &gt;= 1; i--) {
+    const rowDate = String(data[i][0]).trim();
+    const rowTime = String(data[i][1]).trim().substring(0, 5);
+    if (rowDate === p.date &amp;&amp; rowTime === p.time) {
+      sheet.deleteRow(i + 1); // +1 because getDataRange is 0-indexed, sheet rows are 1-indexed
+      return json({success: true, deletedRow: i + 1});
+    }
+  }
+  return json({success: true, notFound: true}); // row already gone — not an error
+}
+
+function colorRow(sheet, rowNum, status) {
+  sheet.getRange(rowNum, 1, 1, COL_HEADERS.length)
+       .setBackground(status === 'תפוס' ? '#fce4e4' : '#e8f5e9');
+}
+function colorRows(sheet, startRow, rows) {
+  rows.forEach((row, i) =&gt; colorRow(sheet, startRow+i, row[2]));
+}
+function json(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+         .setMimeType(ContentService.MimeType.JSON);
+}</div>
+  </div>
+
+  <div class="api-blk">
+    <h3>🔄 עדכון מערכת</h3><p>ייבא קובץ HTML מלא (מחליף את הקוד, שומר נתונים) — או קובץ תוסף <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px">.html</code> שמוסיף פיצ'רים חדשים בלי לגעת בבסיס</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <label class="btn btn-primary" style="cursor:pointer">🚀 עדכן / הוסף תוסף<input type="file" accept=".html" style="display:none" onchange="systemUpdateFromHTML(this.files[0])"></label>
+      <label class="btn btn-teal" style="cursor:pointer">📤 ייבא נתונים (merge)<input type="file" accept=".json" style="display:none" onchange="DB.mergeImport(this.files[0])"></label>
+      <button class="btn btn-outline" onclick="DB.exportJSON()">📥 ייצא גיבוי</button>
+    </div>
+    <div class="fhint" style="margin-top:10px">עדכון HTML: מחליף את הקוד, שומר 100% נתונים. קובץ תוסף (patch): מוסיף פיצ'רים בלי לשנות את הבסיס.</div>
+    <div id="patches-list"></div>
+  </div>
+
+  <div class="api-blk">
+    <h3>🔒 אבטחה</h3>
+    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--text2);line-height:1.8">
+      <div>✅ <strong>נעילת חשבון:</strong> אחרי undefined כניסות כושלות – נעילה ל-15 דקות</div>
+      <div>✅ <strong>זכור אותי:</strong> תוקף 30 יום – מאוחסן בצפינה ב-localStorage</div>
+      <div>✅ <strong>מכשירים:</strong> ניתן לראות, לנתק ולחסום מכשירים מחוברים בלוח הניהול</div>
+      <div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="_clearAllLocks()">🔓 נקה נעילות</button></div>
+    </div>
+  </div>
+
+  <div class="api-blk">
+    <h3>📵 מכשירים חסומים</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:14px">מכשירים שנחסמו לא יוכלו להתחבר לשום חשבון. ניתן לבטל חסימה בכל עת.</p>
+    <div style="color:var(--text2);text-align:center;padding:20px">אין מכשירים חסומים</div>
+  </div></div>
     </div>
     <!-- Mobile FAB: new appointment -->
-    <button id="mob-fab" onclick="openAddAppt()" title="תור חדש"
-      style="display:none;position:fixed;bottom:24px;left:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6C3FF5,#A855F7);color:#fff;font-size:26px;border:none;box-shadow:0 4px 20px rgba(108,63,245,.5);cursor:pointer;z-index:800;align-items:center;justify-content:center;transition:transform .15s">➕</button>
+    <button id="mob-fab" onclick="openAddAppt()" title="תור חדש" style="display:none;position:fixed;bottom:24px;left:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6C3FF5,#A855F7);color:#fff;font-size:26px;border:none;box-shadow:0 4px 20px rgba(108,63,245,.5);cursor:pointer;z-index:800;align-items:center;justify-content:center;transition:transform .15s">➕</button>
   </div>
 </div>
 <!-- MODAL -->
@@ -482,7 +765,7 @@ input:checked+.tsl:before{transform:translateX(-18px)}
   <div class="modal" style="max-width:460px">
     <div class="mo-head"><h3>📷 צילום תמונה</h3><button class="btn-x" onclick="closeCam()">×</button></div>
     <div class="mo-body" style="padding:14px">
-      <video id="cam-vid" style="width:100%;border-radius:var(--radius-sm);background:#111;max-height:300px;display:block" autoplay playsinline muted></video>
+      <video id="cam-vid" style="width:100%;border-radius:var(--radius-sm);background:#111;max-height:300px;display:block" autoplay="" playsinline="" muted=""></video>
       <canvas id="cam-cnv" style="display:none"></canvas>
       <img id="cam-prv" style="width:100%;border-radius:var(--radius-sm);display:none;max-height:300px;object-fit:contain">
       <div id="cam-err" style="display:none;padding:18px;text-align:center;color:var(--red);background:#FEF2F2;border-radius:var(--radius-sm);margin-top:8px">
@@ -560,6 +843,16 @@ function _clearAllLocks(){
 }
 
 const GAPI = (() => {
+  // Check if URL contains ?api=... (shared link with URL baked in)
+  const _urlParams = new URLSearchParams(window.location.search);
+  const _apiFromUrl = _urlParams.get('api');
+  if(_apiFromUrl && _apiFromUrl.startsWith('https://')){
+    // Save to localStorage so it persists
+    localStorage.setItem('bp_gapi', JSON.stringify({
+      scriptUrl: _apiFromUrl,
+      spreadsheetId: DEFAULT_SHEET_ID
+    }));
+  }
   // Load from localStorage; fall back to pre-filled defaults
   const s = JSON.parse(localStorage.getItem('bp_gapi') || '{}');
   const obj = {
@@ -1469,6 +1762,17 @@ function showLoginErr(msg){
   e.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:280,iterations:2});
 }
 let _loginBusy = false; // prevent parallel login calls
+
+// Show a subtle hint for new devices that couldn't sync
+function _showNewDeviceHint(){
+  const footer = document.querySelector('.login-footer');
+  if(!footer || document.getElementById('new-dev-hint')) return;
+  const hint = document.createElement('div');
+  hint.id = 'new-dev-hint';
+  hint.style.cssText = 'margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.6);text-align:center;line-height:1.6';
+  hint.innerHTML = '📱 מכשיר חדש?<br>הכנס קוד מנהל ואחרי הכניסה<br>עדכן URL בהגדרות ⚙️';
+  footer.parentNode.insertBefore(hint, footer);
+}
 
 async function doLogin(){
   // ── Prevent parallel calls (user tapping multiple times) ──
@@ -2448,6 +2752,8 @@ function json(obj) {
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="saveGapi()">💾 שמור</button>
       <button class="btn btn-teal" id="test-btn" onclick="testScript()">🔌 בדוק חיבור</button>
+      <button class="btn btn-outline" onclick="_copyShareLink()" title="העתק קישור שכולל את ה-URL — שלח למישהו ופותח את האפליקציה מוגדרת">🔗 העתק קישור שיתוף</button>
+      <button class="btn btn-outline" onclick="exportUpdatedHTML()" title="הורד קובץ HTML עם ה-URL הנוכחי — העלה ל-Vercel ומכשירים חדשים יסתנכרנו אוטומטית">📥 ייצא HTML מעודכן לVercel</button>
     </div>
   </div>
 
@@ -2697,6 +3003,51 @@ async function testScript(){
     console.error('testScript:',e);
   }
 }
+// Export updated HTML with current URL baked in as DEFAULT
+// Upload this to Vercel so new devices auto-sync
+function _copyShareLink(){
+  const url = GAPI.scriptUrl;
+  if(!url || !url.startsWith('https://')){toast('שמור URL תחילה','err');return;}
+  const shareUrl = window.location.origin + window.location.pathname + '?api=' + encodeURIComponent(url);
+  navigator.clipboard.writeText(shareUrl)
+    .then(()=>toast('✅ קישור הועתק! שלח למכשיר חדש','ok'))
+    .catch(()=>{
+      // Fallback
+      const inp=document.createElement('input');
+      inp.value=shareUrl;
+      document.body.appendChild(inp);
+      inp.select();
+      document.execCommand('copy');
+      document.body.removeChild(inp);
+      toast('✅ קישור הועתק!','ok');
+    });
+}
+
+function exportUpdatedHTML(){
+  const url = GAPI.scriptUrl;
+  const sheetId = GAPI.spreadsheetId;
+  if(!url || !url.startsWith('https://')){
+    toast('שמור URL תחילה','err'); return;
+  }
+  // Get current page HTML, replace DEFAULT URLs
+  const html = document.documentElement.outerHTML;
+  const updated = html
+    .replace(
+      /const DEFAULT_SCRIPT_URL = '[^']*'/,
+      `const DEFAULT_SCRIPT_URL = '${url}'`
+    )
+    .replace(
+      /const DEFAULT_SHEET_ID\s*=\s*'[^']*'/,
+      `const DEFAULT_SHEET_ID   = '${sheetId}'`
+    );
+  const blob = new Blob([updated], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'BookPro_deploy.html';
+  a.click();
+  toast('✅ הורד! העלה את הקובץ ל-Vercel','ok');
+}
+
 function saveGapi(){
   const urlVal   = (document.getElementById('g-url')   || {}).value || '';
   const sheetVal = (document.getElementById('g-sheet') || {}).value || '';
@@ -4734,15 +5085,18 @@ window.addEventListener('DOMContentLoaded', async ()=>{
             if(res.data._blockedDevices) db._blockedDevices=res.data._blockedDevices;
             if(res.data.chats)           db.chats=res.data.chats;
             localStorage.setItem('bp_db',JSON.stringify(db));
-            // Show subtle "ready" indicator on login button
             const btn=document.getElementById('l-btn');
             if(btn&&!btn.disabled) btn.style.boxShadow='0 4px 20px rgba(16,185,129,.6)';
+          } else {
+            // Data still empty after fetch — show URL hint
+            _showNewDeviceHint();
           }
-        }catch(e){ console.warn('bg sync:',e); }
-      },500); // 500ms delay so login screen renders first
+        }catch(e){ console.warn('bg sync:',e); _showNewDeviceHint(); }
+      },500);
     }
   }
 });
 </script>
-</body>
-</html>
+
+
+</body></html>
