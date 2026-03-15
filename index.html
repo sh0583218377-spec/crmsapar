@@ -4560,15 +4560,8 @@ function saveHours(uid){
   DAYS.forEach(d=>{u.workingHours[d]={a:document.getElementById(`ha-${d}`)?.checked||false,s:document.getElementById(`ht-${d}`)?.value||'',e:document.getElementById(`het-${d}`)?.value||''};});
   u.slotDuration=parseInt(document.getElementById('sn')?.value||30);
   DB.save(db); closeMo(); toast('שעות נשמרו ✅','ok');
-  // Ask admin if they want to generate slots now
-  const defTo=dateStr(new Date(Date.now()+30*86400000));
-  setTimeout(()=>{
-    showConfirm('📅 הוסף תורים פנויים',
-      `להוסיף תורים פנויים לפי שעות החדשות עבור ${u.name}?\nמהיום עד ${defTo}\n(תורים תפוסים קיימים לא יימחקו)`,
-      ()=>_quickCreateSlots(uid, td(), defTo),
-      ()=>openAutoAppts(uid)  // Cancel → open full dialog
-    );
-  }, 300);
+  // Open date picker so admin can choose the range — no confirm needed
+  setTimeout(()=>openAutoAppts(uid), 300);
 }
 // Admin: full slot generation dialog (script + app write options)
 // Quick slot creation — called from saveHours confirm
@@ -4597,7 +4590,9 @@ async function _quickCreateSlots(uid, from, to){
     }
     db.appointments[uid]=[...db.appointments[uid],...na];
     DB.save(db);
-    toast(`✅ ${na.length} תורים נוצרו עבור ${u.name}`,'ok');
+    const satCount=na.filter(a=>{try{return new Date(a.date+'T12:00:00').getDay()===6;}catch{return false;}}).length;
+    const extraInfo=satCount>0?` (כולל ${satCount} ש/מוצ'ש)`:'';
+    toast(`✅ ${na.length} תורים נוצרו עבור ${u.name}${extraInfo}`,'ok');
     if(GAPI.ready()){
       SQ.push(()=>SHEETS.bulkPush(u),'bulkPush');
       toast('📊 מסנכרן לגוגל שיטס...','info');
