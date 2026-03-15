@@ -423,7 +423,7 @@ input:checked+.tsl:before{transform:translateX(-18px)}
 <div id="screen-login" class="screen active">
   <div class="login-wrap"><div class="login-card">
     <div class="login-logo">
-      <div class="login-icon">✂</div><h1>BookPro</h1><p>מערכת ניהול תורים חכמה</p>
+      <div class="login-icon">📅</div><h1>BookPro</h1><p>מערכת ניהול תורים חכמה</p>
     </div>
     <div class="login-fields">
       <div class="lg-field"><label>מזהה משתמש</label>
@@ -966,52 +966,50 @@ function stopPolling() {
 }
 
 // Background system poll for admin/superadmin — detects user deletions & changes on any page
+async function _runAdminPoll() {
+  if (!CU || (CU.role!=='admin' && CU.role!=='superadmin')) return;
+  if (document.hidden) return;
+  try {
+    const res = await SHEETS.readSystem();
+    if (!res || !res.data) return;
+    const sys = res.data;
+    const deletedIds = new Set([...(db._deletedUsers||[]),...(sys._deletedUsers||[])]);
+    db._deletedUsers = [...deletedIds];
+    let changed = false;
+    if (Array.isArray(sys.users)) {
+      db.users = (sys.users||[]).filter(u=>!deletedIds.has(u.id)); changed = true;
+    }
+    if (sys.devices) {
+      if (!db.devices) db.devices = {};
+      Object.keys(sys.devices).forEach(uid=>{
+        if (!db.devices[uid]) db.devices[uid]=[];
+        const localIds=new Set(db.devices[uid].map(d=>d.devId));
+        (sys.devices[uid]||[]).forEach(d=>{if(!localIds.has(d.devId)){db.devices[uid].push(d);changed=true;}});
+      });
+    }
+    if (sys.adminUsers) { db.adminUsers = sys.adminUsers; changed = true; }
+    if (sys._blockedDevices) { db._blockedDevices = sys._blockedDevices; changed = true; }
+    if (changed) {
+      const validIds = new Set(db.users.map(u=>u.id));
+      Object.keys(db.appointments||{}).forEach(uid=>{ if(!validIds.has(uid)) delete db.appointments[uid]; });
+      Object.keys(db.chats||{}).forEach(uid=>{ if(!validIds.has(uid)) delete db.chats[uid]; });
+      DB.save(db);
+      if (curPage==='users'||curPage==='allchats'||curPage==='subscriptions'||curPage==='dashboard') goPage(curPage);
+      buildNav();
+    }
+  } catch(e) {}
+}
+
 function startAdminBgPoll() {
   if (window._adminBgPoll) return;
   if (!GAPI.ready()) return;
+  // Run immediately first, then every 30s
+  _runAdminPoll();
   window._adminBgPoll = setInterval(async () => {
     if (!CU || (CU.role!=='admin' && CU.role!=='superadmin')) {
       clearInterval(window._adminBgPoll); window._adminBgPoll = null; return;
     }
-    if (document.hidden) return; // skip when tab not visible
-    try {
-      const res = await SHEETS.readSystem();
-      if (!res || !res.data) return;
-      const sys = res.data;
-      const deletedIds = new Set([...(db._deletedUsers||[]),...(sys._deletedUsers||[])]);
-      db._deletedUsers = [...deletedIds];
-      let changed = false;
-      if (Array.isArray(sys.users)) {
-        const newUsers = (sys.users||[]).filter(u=>!deletedIds.has(u.id));
-        // Always update — catches subscription changes even when count is same
-        db.users = newUsers; changed = true;
-      }
-      // Merge devices so all admin devices see full list
-      if (sys.devices) {
-        if (!db.devices) db.devices = {};
-        Object.keys(sys.devices).forEach(uid=>{
-          if (!db.devices[uid]) db.devices[uid]=[];
-          const localIds=new Set(db.devices[uid].map(d=>d.devId));
-          (sys.devices[uid]||[]).forEach(d=>{if(!localIds.has(d.devId)){db.devices[uid].push(d);changed=true;}});
-        });
-      }
-      if (sys.adminUsers) {
-        db.adminUsers = sys.adminUsers; changed = true;
-      }
-      if (sys._blockedDevices) {
-        db._blockedDevices = sys._blockedDevices; changed = true;
-      }
-      if (changed) {
-        // Clean orphaned data
-        const validIds = new Set(db.users.map(u=>u.id));
-        Object.keys(db.appointments||{}).forEach(uid=>{ if(!validIds.has(uid)) delete db.appointments[uid]; });
-        Object.keys(db.chats||{}).forEach(uid=>{ if(!validIds.has(uid)) delete db.chats[uid]; });
-        DB.save(db);
-        // If current page is affected, refresh it
-        if (curPage==='users'||curPage==='allchats'||curPage==='subscriptions') goPage(curPage);
-        buildNav();
-      }
-    } catch(e) {}
+    await _runAdminPoll();
   }, 30000); // every 30 seconds
 }
 function _onVisibility() {
@@ -3403,7 +3401,8 @@ function rMain(){
   const appts=(db.appointments[uid]||[]).filter(a=>a.date===tds).sort((a,b)=>a.time.localeCompare(b.time));
   const allA=db.appointments[uid]||[];
   const uCl=new Set(allA.filter(a=>a.phone).map(a=>a.phone)).size;
-  const rev=allA.filter(a=>a.status==='busy').reduce((s,a)=>s+(parseFloat(a.price)||0),0);
+  const revToday=appts.filter(a=>a.status==='busy').reduce((s,a)=>s+(parseFloat(a.price)||0),0);
+  const revMonth=allA.filter(a=>a.date?.startsWith(tds.slice(0,7))&&a.status==='busy').reduce((s,a)=>s+(parseFloat(a.price)||0),0);
   const mA=allA.filter(a=>a.date?.startsWith(tds.slice(0,7))&&a.status==='busy').length;
   const busy=appts.filter(a=>a.status==='busy').length;
   // Subscription warning
@@ -3418,9 +3417,9 @@ function rMain(){
   const syncNote=GAPI.ready()?'':`<div style="background:#FEF3C7;border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;color:#92400E;margin-bottom:18px">⚠️ Google Sheets לא מחובר – <a href="#" onclick="event.preventDefault();goPage('apiconfig')" style="color:#92400E;font-weight:800">הגדרות</a></div>`;
   CA(`${subWarn}${syncNote}<div class="stats-grid">
     <div class="stat-card sc-purple"><div class="stat-icon">📅</div><div class="stat-num">${busy}/${appts.length}</div><div class="stat-label">תורים היום</div></div>
-    <div class="stat-card sc-teal"><div class="stat-icon">👤</div><div class="stat-num">${uCl}</div><div class="stat-label">לקוחות</div></div>
+    <div class="stat-card sc-teal" onclick="goPage('allcustomers')" style="cursor:pointer"><div class="stat-icon">👤</div><div class="stat-num">${uCl}</div><div class="stat-label">לקוחות</div></div>
     <div class="stat-card sc-green"><div class="stat-icon">📆</div><div class="stat-num">${mA}</div><div class="stat-label">החודש</div></div>
-    <div class="stat-card sc-orange"><div class="stat-icon">💰</div><div class="stat-num">₪${Math.round(rev)}</div><div class="stat-label">הכנסות</div></div>
+    <div class="stat-card sc-orange"><div class="stat-icon">💰</div><div class="stat-num">₪${Math.round(revMonth)}</div><div class="stat-label">הכנסות החודש</div><div style="font-size:12px;opacity:.8;margin-top:3px">היום: ₪${Math.round(revToday)}</div></div>
   </div>
   <div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <div class="srch-bar" style="flex:1;min-width:220px"><span class="si">🔍</span>
@@ -4699,7 +4698,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   // Restore login screen HTML
   loginEl.innerHTML = `<div class="login-wrap"><div class="login-card">
     <div class="login-logo">
-      <div class="login-icon">✂</div><h1>BookPro</h1><p>מערכת ניהול תורים חכמה</p>
+      <div class="login-icon">📅</div><h1>BookPro</h1><p>מערכת ניהול תורים חכמה</p>
     </div>
     <div class="login-fields">
       <div class="lg-field"><label>מזהה משתמש</label>
