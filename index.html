@@ -447,6 +447,7 @@ input:checked+.tsl:before{transform:translateX(-18px)}
   <div class="mob-top">
     <button class="hamburger" onclick="toggleSb()">☰</button>
     <h2 id="mob-title">BookPro</h2>
+    <button id="mob-back-btn" onclick="_mobGoBack()" style="display:none;align-items:center;justify-content:center;background:transparent;border:none;color:#fff;font-size:26px;font-weight:300;cursor:pointer;padding:0 8px;line-height:1">‹</button>
     <button class="mob-logout-btn" onclick="doLogout()" title="התנתק">🚪</button>
   </div>
   <div class="sb-ovr" id="sb-ovr" onclick="toggleSb()"></div>
@@ -532,6 +533,20 @@ function nowT() { const n=new Date(); return `${n.getHours()}:${String(n.getMinu
 // ── Pre-fill defaults (can be overridden in Settings) ──
 const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC_EFqcn3A1qPVbpSaqnpJoWcDjpTj-fNYBi1eMyRRfq29ddPUY_MTx0GjvN5WwZg3/exec';
 const DEFAULT_SHEET_ID   = '14o-EbhozgOFwVTjnjpfyc9TirjtSfg7uIH8GEuT_Cdg';
+
+// Clear login rate-limit locks for all users
+function _clearAllLocks(){
+  try {
+    // Clear all bp_sec_* keys from localStorage
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith('bp_sec_'));
+    keys.forEach(k=>localStorage.removeItem(k));
+    // Also clear for every known user
+    [...(db.users||[]),...(db.adminUsers||[])].forEach(u=>{
+      try{localStorage.removeItem('bp_sec_'+(u.userId||u.id));}catch(e){}
+    });
+    toast('✅ כל הנעילות נוקו ('+keys.length+' מפתחות)','ok');
+  } catch(e){ toast('שגיאה: '+e.message,'err'); }
+}
 
 const GAPI = (() => {
   // Load from localStorage; fall back to pre-filled defaults
@@ -1640,7 +1655,11 @@ function hasUnread(id){
   if(id==='allchats'){
     const _canSeeSupport=CU.role==='superadmin'||(CU.permissions||[]).includes('supportChat');
     const uUnread=_canSeeSupport?Object.values(db.chats||{}).reduce((s,arr)=>s+(arr||[]).filter(m=>m.from==='user').length,0)-(rm.support||0):0;
-    const aUnread=Object.values(db.adminChats||{}).reduce((s,arr)=>s+(arr||[]).filter(m=>!m.read).length,0);
+    // aUnread: only count superadmin messages that current admin hasn't read
+    // (admin→SA messages are already stored with read:false but SA marks them read separately)
+    const aUnread = CU.role==='superadmin'
+      ? Object.values(db.adminChats||{}).reduce((s,arr)=>s+(arr||[]).filter(m=>m.from==='admin'&&!m.read).length,0)
+      : (db.adminChats?.[CU.id]||[]).filter(m=>m.from==='superadmin'&&!m.read).length;
     const gUnread=(db.groupChat||[]).length-(rm.groupchat||0);
     return (uUnread+aUnread+gUnread)>0;
   }
@@ -1717,6 +1736,7 @@ function goPage(p,params={},_fromPop=false){
     groups:rGroups,usergroups:rUserGroups,
     main:rMain,dateview:rDateView,customer:()=>rCust(params.phone),
     usersupport:rUserSupport,allcustomers:rAllCust,allphotos:rAllPhotos,apiconfig:rApiCfg})[p]?.();
+  _updateMobBackBtn();
 }
 function showSubscriptionLock(status){
   const old=document.getElementById('bp-sub-lock');if(old)old.remove();
@@ -2403,7 +2423,7 @@ function json(obj) {
       <div>✅ <strong>נעילת חשבון:</strong> אחרי ${SEC.MAX} כניסות כושלות – נעילה ל-15 דקות</div>
       <div>✅ <strong>זכור אותי:</strong> תוקף 30 יום – מאוחסן בצפינה ב-localStorage</div>
       <div>✅ <strong>מכשירים:</strong> ניתן לראות, לנתק ולחסום מכשירים מחוברים בלוח הניהול</div>
-      <div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="SEC.ok('global');SEC.ok('${CU?.userId||''}');toast('נעילות נוקו','ok')">🔓 נקה נעילות</button></div>
+      <div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="_clearAllLocks()">🔓 נקה נעילות</button></div>
     </div>
   </div>
 
@@ -2842,12 +2862,17 @@ function openCreateGroup(){
     <div class="field"><label>שם קבוצה</label><input type="text" id="grp-name" placeholder="למשל: לקוחות VIP, ספקים..." class="inp"></div>
     <div class="field" style="margin-top:12px"><label>הוסף חברים</label>
       <div style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px">
-        ${users.map(u=>`<label style="display:flex;align-items:center;gap:10px;padding:6px;border-radius:6px;cursor:pointer">
-          <input type="checkbox" class="grp-mem" value="${u.id}" style="width:16px;height:16px">
-          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">${u.name[0]}</div>
-          <span>${u.name}</span>
-        </label>`).join('')}
-        ${!users.length?'<div style="color:var(--text2);text-align:center;padding:12px">אין משתמשים</div>':''}
+        ${(()=>{
+          const adminMembers=(db.adminUsers||[]).map(a=>({id:'adm_'+a.id,name:'🛡 '+a.name,_isAdmin:true,_realId:a.id}));
+          const allMembers=[...users,...adminMembers];
+          return allMembers.length
+            ? allMembers.map(u=>`<label style="display:flex;align-items:center;gap:10px;padding:6px;border-radius:6px;cursor:pointer">
+                <input type="checkbox" class="grp-mem" value="${u.id}" style="width:16px;height:16px">
+                <div style="width:30px;height:30px;border-radius:50%;background:${u._isAdmin?'linear-gradient(135deg,#0EA5E9,#06B6D4)':'linear-gradient(135deg,var(--g1),var(--g2))'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">${(u.name.replace('🛡 ',''))[0]}</div>
+                <span>${u.name}</span>
+              </label>`).join('')
+            : '<div style="color:var(--text2);text-align:center;padding:12px">אין משתמשים</div>';
+        })()}
       </div>
     </div>`,
     [{l:'✅ צור קבוצה',c:'btn btn-primary',f:saveCreateGroup},{l:'ביטול',c:'btn btn-ghost',f:closeMo}]);
@@ -3140,10 +3165,11 @@ function sendSuperMsg(adminId){
   if(!db.adminChats) db.adminChats={};
   const i=document.getElementById('ci'),t=i.value.trim();if(!t)return;
   if(!db.adminChats[adminId])db.adminChats[adminId]=[];
-  db.adminChats[adminId].push({from:'superadmin',text:t,time:nowT(),date:td(),read:false});
+  db.adminChats[adminId].push({from:'superadmin',text:t,time:nowT(),date:td(),read:true}); // own messages read
   DB.save(db);i.value='';
   const c=document.getElementById('chat-msgs');
   if(c){c.innerHTML=renderAdminMsgs(db.adminChats[adminId],'superadmin');c.scrollTop=c.scrollHeight;}
+  if(GAPI.ready()) SHEETS.writeMeta();
 }
 
 
@@ -3281,11 +3307,11 @@ function sendAdminChatMsg(){
   if(!db.adminChats) db.adminChats={};
   const i=document.getElementById('ci'),t=(i?.value||'').trim();if(!t)return;
   const id=CU.id;if(!db.adminChats[id])db.adminChats[id]=[];
-  db.adminChats[id].push({from:'admin',text:t,time:nowT(),date:td(),read:false});
+  db.adminChats[id].push({from:'admin',text:t,time:nowT(),date:td(),read:false}); // unread for superadmin
   DB.save(db);if(i)i.value='';
   const c2=document.getElementById('chat-msgs');
   if(c2){c2.innerHTML=renderAdminMsgs(db.adminChats[id],'admin');c2.scrollTop=c2.scrollHeight;}
-  if(GAPI.ready()) SHEETS.writeSystem();
+  if(GAPI.ready()) SHEETS.writeMeta();
 }
 
 // ═══════════════════════════════════════════════════
@@ -3634,7 +3660,7 @@ function apptHtml(a){
         <div class="sopt ${a.status==='free'?'s-free':''}" onclick="togStatus('${a.id}','free')">פנוי</div>
         <div class="sopt ${a.status==='busy'?'s-busy':''}" onclick="togStatus('${a.id}','busy')">תפוס</div>
       </div>
-      ${a.status==='busy'?`<button class="btn-icon" onclick="event.stopPropagation();goPage('customer',{phone:'${a.phone}'})" title="כרטיס לקוח">👤</button>`:''}
+      ${(a.status==='busy'&&a.phone)?`<button class="btn-icon" onclick="event.stopPropagation();goPage('customer',{phone:'${a.phone}'})" title="כרטיס לקוח">👤</button>`:''}
     </div>
   </div>`;
 }
@@ -3723,12 +3749,11 @@ function apptFormWithSlots(a,slots){
         <label class="btn btn-outline btn-sm" style="cursor:pointer">📁 גלריה<input type="file" accept="image/*" style="display:none" onchange="handleUpload(this,'af-img','af-prv')"></label>
         <button type="button" class="btn btn-outline btn-sm" onclick="openCam('af-img','af-prv')">📷 מצלמה</button>
       </div>
-      <div id="af-remove-wrap" style="${a.imageUrl?'':'display:none'}">
-        <button type="button" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA;margin-bottom:6px" onclick="removeApptImg()">🗑 הסר תמונה</button>
+      <div style="position:relative;margin-top:10px" id="af-prv-wrap" style="${a.imageUrl?'':'display:none'}">
+        <img id="af-prv" src="${a.imageUrl||''}" style="width:100%;max-height:150px;object-fit:cover;border-radius:var(--radius-sm);display:${a.imageUrl?'block':'none'}" onerror="this.style.display='none'">
+        <button type="button" onclick="removeApptImg()" id="af-remove-btn"
+          style="position:absolute;top:6px;left:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:15px;cursor:pointer;display:${a.imageUrl?'flex':'none'};align-items:center;justify-content:center;line-height:1;padding:0">✕</button>
       </div>
-      ${a.imageUrl?`<img id="af-prv" src="${a.imageUrl}" style="width:100%;max-height:150px;object-fit:cover;border-radius:var(--radius-sm);margin-top:10px" onerror="this.style.display='none'">`:
-        `<img id="af-prv" style="display:none;width:100%;max-height:150px;object-fit:cover;border-radius:var(--radius-sm);margin-top:10px">`}
-    </div>
     <input type="hidden" id="af-img" value="${a.imageUrl||''}">
   </div>`;
 }
@@ -3892,10 +3917,12 @@ function openImgFull(idx){
 function removeApptImg(){
   const imgInput = document.getElementById('af-img');
   const imgPreview = document.getElementById('af-prv');
-  const removeBtn = document.querySelector('[onclick="removeApptImg()"]');
+  const removeBtn = document.getElementById('af-remove-btn');
+  const wrapDiv = document.getElementById('af-prv-wrap');
   if(imgInput) imgInput.value = '';
   if(imgPreview){ imgPreview.src=''; imgPreview.style.display='none'; }
   if(removeBtn) removeBtn.style.display='none';
+  if(wrapDiv) wrapDiv.style.display='none';
   toast('תמונה הוסרה','ok');
 }
 async function handleUpload(input,urlId,prevId){
@@ -3904,6 +3931,9 @@ async function handleUpload(input,urlId,prevId){
   const url=await resizeImage(file,800,0.75);
   document.getElementById(urlId).value=url;
   const p=document.getElementById(prevId);if(p){p.src=url;p.style.display='block';}
+  // Show the overlay wrapper and X button
+  const wrap=document.getElementById('af-prv-wrap');if(wrap)wrap.style.display='';
+  const xbtn=document.getElementById('af-remove-btn');if(xbtn)xbtn.style.display='flex';
   toast('תמונה הועלתה ✅','ok');
 }
 function resizeImage(file,maxPx,quality){
@@ -4419,8 +4449,36 @@ function toast(msg,type='ok'){
 
 // ── Back navigation (mobile swipe / browser back button) ──
 // When user swipes back, restore the previous page within the app
+// Mobile back button — uses browser history.back()
+function _mobGoBack(){
+  if(window.history.length > 1){
+    history.back();
+  } else {
+    // No history — go to default page
+    goPage(CU && CU.role === 'user' ? 'main' : 'dashboard');
+  }
+}
+
+// Show/hide mobile back button based on history depth and current page
+function _updateMobBackBtn(){
+  const btn = document.getElementById('mob-back-btn');
+  if(!btn) return;
+  // Show back button on all pages EXCEPT the initial landing page
+  const isRoot = (CU && CU.role==='user' && curPage==='main') ||
+                 (CU && CU.role!=='user' && curPage==='dashboard');
+  btn.style.display = (!isRoot && window.history.length > 1) ? 'flex' : 'none';
+}
+
 window.addEventListener('popstate', function(e){
   if(!window.CU) return; // not logged in — let browser handle
+  // Always close any open modal first — otherwise the modal stays visible
+  const moOvr = document.getElementById('mo-ovr');
+  if(moOvr && !moOvr.classList.contains('hidden')){
+    moOvr.classList.add('hidden');
+    // If modal had a poll (admin chat), clear it
+    clearInterval(window._adminChatPoll); window._adminChatPoll=null;
+    window._openAdminChatUid=null;
+  }
   if(e.state && e.state.page){
     // Restore calDate if it was saved in this history entry
     if(e.state._calDate){
@@ -4428,7 +4486,7 @@ window.addEventListener('popstate', function(e){
     }
     goPage(e.state.page, e.state.params||{}, true); // _fromPop=true → don't push again
   } else {
-    // No state — probably the initial entry; go to default page
+    // No state — go to default page
     if(CU.role==='user') goPage('main',{},true);
     else goPage('dashboard',{},true);
   }
