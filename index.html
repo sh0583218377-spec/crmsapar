@@ -1446,7 +1446,7 @@ function showLoginErr(msg){
   e.textContent=msg;e.style.display='block';
   e.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:280,iterations:2});
 }
-function doLogin(){
+async function doLogin(){
   const uid=(document.getElementById('l-uid')?.value||'').trim();
   const pass=document.getElementById('l-pass')?.value||'';
   const rem=document.getElementById('l-rem')?.checked||false;
@@ -1471,9 +1471,27 @@ function doLogin(){
     if(isBlocked){showLoginErr('🚫 מכשיר זה חסום. פנה למנהל המערכת.');return;}
     SEC.ok(uid);CU={...bu,role:'user'};sessSave(CU,rem);enterApp(true);return;
   }
+  // If db.users is empty and GAPI is ready → maybe Sheets didn't load yet
+  // Try fetching once more before giving up
+  if(db.users.length===0 && db.adminUsers.length===0 && GAPI.ready()){
+    const btn=document.getElementById('l-btn');
+    if(btn){btn.disabled=true;btn.textContent='⏳ טוען נתונים...';}
+    try{
+      const res=await SHEETS.readSystem();
+      if(res&&res.data&&Array.isArray(res.data.users)&&res.data.users.length>0){
+        db.users=res.data.users||[];
+        db.adminUsers=res.data.adminUsers||[];
+        localStorage.setItem('bp_db',JSON.stringify(db));
+        // Retry login with freshly loaded data
+        if(btn){btn.disabled=false;btn.textContent='כניסה למערכת ›';}
+        doLogin(); return; // recursive call with fresh data
+      }
+    }catch(e){}
+    if(btn){btn.disabled=false;btn.textContent='כניסה למערכת ›';}
+  }
   SEC.fail(uid||'x');
   const sec2=SEC.check(uid||'x');
-  showLoginErr(sec2.ok?'❌ מזהה משתמש או סיסמה שגויים':sec2.msg);
+  showLoginErr(sec2.ok?'❌ מזהה משתמש או סיסמה שגויים — אם זה מכשיר חדש, בדוק חיבור לאינטרנט':sec2.msg);
 }
 
 function enterApp(showWelcome=true){
@@ -3001,7 +3019,15 @@ function rAllChats(){
   // Calc unread per tab
   const _suppTotal=Object.values(db.chats||{}).reduce((s,arr)=>s+(arr||[]).filter(m=>m.from==='user').length,0);
   const supportDot=CU.role==='superadmin'||(CU.permissions||[]).includes('supportChat') ? _suppTotal>(db._readMarks?.support||0) : false;
-  const adminDot=Object.values(db.adminChats||{}).reduce((s,arr)=>s+(arr||[]).filter(m=>!m.read).length,0)>0;
+  const adminDot=(()=>{
+    if(CU.role==='superadmin'){
+      // superadmin sees unread messages FROM admins
+      return Object.values(db.adminChats||{}).reduce((s,arr)=>s+(arr||[]).filter(m=>m.from==='admin'&&!m.read).length,0)>0;
+    } else {
+      // admin sees unread messages FROM superadmin
+      return (db.adminChats?.[CU.id]||[]).filter(m=>m.from==='superadmin'&&!m.read).length>0;
+    }
+  })();
   const groupDot=(db.groupChat||[]).length>(db._readMarks?.groupchat||0);
 
   let content='';
@@ -4520,7 +4546,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   loginEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:rgba(255,255,255,.7)">
     <div style="font-size:40px">📅</div>
     <div style="font-size:18px;font-weight:700;color:#fff">BookPro</div>
-    <div style="font-size:13px">טוען נתונים...</div>
+    <div style="font-size:13px">טוען נתונים מהשרת...</div>
     <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#A78BFA;border-radius:50%;animation:spin .8s linear infinite"></div>
   </div>`;
   loginEl.classList.add('active');
@@ -4528,10 +4554,19 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   // Try to fetch system data from Sheets (brings cross-device data)
   if (GAPI.ready()) {
     try {
-      const res = await Promise.race([
-        SHEETS.readSystem(),
-        new Promise(r => setTimeout(()=>r(null), 6000)) // 6s timeout
-      ]);
+      // Try up to 2 times with 15s timeout each — handles slow networks and cold starts
+      let res = null;
+      for(let attempt=1; attempt<=2 && !res?.data?.users?.length; attempt++){
+        if(attempt>1){
+          const loadTxt=document.querySelector('#screen-login div[style*="טוען"]');
+          if(loadTxt) loadTxt.textContent='מנסה שוב... ('+attempt+'/2)';
+        }
+        res = await Promise.race([
+          SHEETS.readSystem(),
+          new Promise(r => setTimeout(()=>r(null), 15000)) // 15s timeout
+        ]);
+        if(res?.data?.users?.length) break; // got data, stop retrying
+      }
       if (res && res.data && Array.isArray(res.data.users)) {
         const sys = res.data;
         // Merge _deletedUsers — union of local + remote deletion lists
